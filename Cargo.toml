@@ -1,0 +1,15 @@
+[workspace]
+resolver = "2"
+members = ["crates/cli", "crates/core", "crates/web"]
+
+[workspace.package]
+version = "0.1.0"
+authors = ["nazo6"]
+description = "Self-hosted web archive"
+
+[workspace.dependencies]
+tokio = "1.36.0"
+serde = { version = "1.0.196", features = ["derive"] }
+serde_json = "1.0.113"
+eyre = "0.6.12"
+futures = "0.3.30"
