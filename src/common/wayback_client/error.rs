@@ -8,4 +8,4 @@ pub enum Error {
     Other(String),
 }
 
-pub type Result<T> = std::result::Result<T, Error>;
+pub(super) type Result<T> = std::result::Result<T, Error>;

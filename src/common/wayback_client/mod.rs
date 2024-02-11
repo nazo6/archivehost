@@ -7,12 +7,12 @@ use serde::Serialize;
 mod error;
 use error::Result;
 
-pub struct WebArchiveClient {
+pub struct WaybackClient {
     pub client: reqwest::Client,
     pub base_url: String,
 }
 
-impl Default for WebArchiveClient {
+impl Default for WaybackClient {
     fn default() -> Self {
         let client = reqwest::Client::builder()
             .tcp_keepalive(Some(Duration::from_secs(60)))
@@ -22,7 +22,7 @@ impl Default for WebArchiveClient {
             .build()
             .unwrap();
         let base_url = "https://web.archive.org".to_string();
-        WebArchiveClient { client, base_url }
+        WaybackClient { client, base_url }
     }
 }
 
@@ -61,6 +61,7 @@ pub struct CdxOptions {
 /// - if url starts with '*.', eg url=*.archive.org/ the query is equivalent to url=archive.org/&matchType=domain
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub enum CdxMatchType {
     /// matchType=exact (default if omitted) will return results matching exactly archive.org/about/
     Exact,
@@ -89,7 +90,7 @@ pub struct CdxLine {
     pub length: String,
 }
 
-impl WebArchiveClient {
+impl WaybackClient {
     pub async fn get_cdx_raw(&self, opts: CdxRawOptions) -> Result<Vec<Vec<String>>> {
         let params = serde_url_params::to_string(&opts)?;
         let url = format!("{}/cdx/search/cdx?{}", &self.base_url, &params);
@@ -189,7 +190,7 @@ mod test {
 
     #[tokio::test]
     async fn test_get_cdx() {
-        let client = WebArchiveClient::default();
+        let client = WaybackClient::default();
         let opts = CdxOptions {
             url: "example.com".to_string(),
             limit: Some(10),
@@ -207,7 +208,7 @@ mod test {
 
     #[tokio::test]
     async fn test_get_page() {
-        let client = WebArchiveClient::default();
+        let client = WaybackClient::default();
         let snapshot_date = "20210101000000";
         let url = "http://example.com";
         let resp = client.get_page(snapshot_date, url).await.unwrap();
