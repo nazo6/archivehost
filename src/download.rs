@@ -4,16 +4,17 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use archivehost_core::{CdxLine, CdxMatchType, CdxOptions, WebArchiveClient};
+use super::wayback_client::{CdxLine, CdxMatchType, CdxOptions, WebArchiveClient};
 use colored::Colorize;
 use eyre::OptionExt;
 use futures::StreamExt;
 use indicatif::{ProgressBar, ProgressStyle};
 use tokio::signal;
 
-use crate::{DownloadArgs, DEFAULT_SAVE_PATH};
-
-static DEFAULT_IGNORE_MIME_TYPES: &[&str] = &["application/zip"];
+use crate::{
+    config::{DATA_DIR, DEFAULT_IGNORE_MIME_TYPES},
+    DownloadArgs,
+};
 
 pub async fn download(args: DownloadArgs) -> eyre::Result<()> {
     let client = WebArchiveClient::default();
@@ -135,7 +136,10 @@ pub async fn download(args: DownloadArgs) -> eyre::Result<()> {
 
                     let path = path.trim_start_matches('/');
 
-                    let save_path = Path::new(DEFAULT_SAVE_PATH).join(host).join(path);
+                    let save_path = Path::new(DATA_DIR.get().unwrap())
+                        .join(host)
+                        .join(&record.timestamp)
+                        .join(path);
 
                     if save_path.exists() {
                         return Ok(Status::Skipped("File already exists".to_string()));
@@ -154,8 +158,8 @@ pub async fn download(args: DownloadArgs) -> eyre::Result<()> {
                 match res {
                     Ok(Status::Done) => {
                         pb.println(format!(
-                            "{} {} [{}]",
-                            "  Done   ".on_green(),
+                            "{}    {} [{}]",
+                            " Done ".on_green(),
                             record.timestamp,
                             record.original,
                         ));
@@ -172,8 +176,8 @@ pub async fn download(args: DownloadArgs) -> eyre::Result<()> {
                     }
                     Err(e) => {
                         pb.println(format!(
-                            "{} {} [{}]",
-                            "  Error  ".on_red(),
+                            "{}   {} [{}]",
+                            " Error ".on_red(),
                             e,
                             record.original
                         ));

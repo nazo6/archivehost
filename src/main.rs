@@ -1,10 +1,11 @@
 use clap::{Args, Parser, Subcommand};
+use config::init_data_dir;
 use eyre::Result;
 
+mod config;
 mod download;
 mod serve;
-
-static DEFAULT_SAVE_PATH: &str = "./output";
+pub mod wayback_client;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -12,6 +13,8 @@ static DEFAULT_SAVE_PATH: &str = "./output";
 struct Cli {
     #[command(subcommand)]
     command: Commands,
+    #[arg(long)]
+    dir: Option<String>,
 }
 
 #[derive(Subcommand)]
@@ -41,14 +44,18 @@ struct DownloadArgs {
 
 #[derive(Args)]
 struct ServeArgs {
-    host: String,
+    // host: String,
     #[arg(short, long, default_value_t = 3000)]
     port: u16,
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    tracing_subscriber::fmt::init();
+
     let cli = Cli::parse();
+
+    init_data_dir(cli.dir);
 
     match cli.command {
         Commands::Download(args) => {
