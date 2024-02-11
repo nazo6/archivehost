@@ -1,30 +1,38 @@
 use axum::{
-    extract::{Path, Request},
-    response::IntoResponse,
+    extract::Path,
+    response::{IntoResponse, Redirect, Response},
 };
 use http::StatusCode;
-use tower::ServiceExt;
-use tower_http::services::ServeFile;
 
-use crate::app::serve::web::utils::find_latest_page;
+use crate::app::serve::web::{serve_file::serve_file, utils::find_latest_page};
 
-#[tracing::instrument(skip(request), err(Debug, level = "warn"))]
+#[tracing::instrument(err(Debug, level = "warn"))]
 pub async fn serve_site_with_timestamp(
     Path((timestamp, url)): Path<(u64, String)>,
-    request: Request,
-) -> Result<impl IntoResponse, (StatusCode, String)> {
-    let latest = find_latest_page(Some(timestamp), url).await.map_err(|_e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "No page found".to_string(),
-        )
-    })?;
+) -> Result<Response, (StatusCode, String)> {
+    let url = url
+        .parse()
+        .map_err(|e| (StatusCode::BAD_REQUEST, format!("Bad request: {}", e)))?;
+    let latest = find_latest_page(Some(timestamp), &url)
+        .await
+        .map_err(|_e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "No page found".to_string(),
+            )
+        })?;
 
-    let Some((_latest_timestamp, latest_path)) = latest else {
+    let Some((latest_timestamp, latest_path)) = latest else {
         return Err((StatusCode::NOT_FOUND, "Not found".to_string()));
     };
 
-    tracing::info!("Serving file: {:?}", latest_path);
+    if latest_timestamp != timestamp {
+        return Ok(Redirect::to(&format!("/web/{}/{}", latest_timestamp, url)).into_response());
+    }
 
-    Ok(ServeFile::new(latest_path).oneshot(request).await)
+    tracing::debug!("Serving file: {:?}", latest_path);
+
+    Ok(serve_file(&latest_path, &url, Some(timestamp))
+        .await
+        .into_response())
 }

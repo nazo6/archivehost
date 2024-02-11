@@ -1,5 +1,9 @@
 use axum::response::IntoResponse;
+use http::header;
 
 pub async fn sw_js() -> impl IntoResponse {
-    include_str!("../../../asset/sw.js")
+    (
+        [(header::CONTENT_TYPE, "text/javascript")],
+        include_str!("../../../asset/sw.js"),
+    )
 }

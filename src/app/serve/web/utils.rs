@@ -22,7 +22,7 @@ async fn find_path(timestamp: u64, url: &Url) -> Result<Option<PathBuf>, eyre::R
 
     let base = Path::new(DATA_DIR.get().unwrap());
     let path = Path::new(url.host_str().ok_or(eyre::eyre!("No host"))?)
-        .join(Path::new(url.path()).strip_prefix("/")?);
+        .join(Path::new(&urlencoding::decode(url.path())?.into_owned()).strip_prefix("/")?);
 
     check_paths.push(base.join(&timestamp).join(scheme).join(&path));
 
@@ -62,16 +62,14 @@ async fn find_path(timestamp: u64, url: &Url) -> Result<Option<PathBuf>, eyre::R
 #[tracing::instrument(err)]
 pub async fn find_latest_page(
     until: Option<u64>,
-    url: String,
+    url: &Url,
 ) -> eyre::Result<Option<(u64, PathBuf)>> {
-    let url = url::Url::parse(&url)?;
-
     if url.host_str().is_none() {
         return Err(eyre::eyre!("No host in URL"));
     };
 
     if let Some(until) = until {
-        if let Some(path) = find_path(until, &url).await? {
+        if let Some(path) = find_path(until, url).await? {
             return Ok(Some((until, path)));
         }
     }
@@ -95,8 +93,26 @@ pub async fn find_latest_page(
                     }
                 }
 
-                if let Some(path) = find_path(timestamp, &url).await? {
+                if let Some(path) = find_path(timestamp, url).await? {
                     latest = Some((timestamp, path));
+                }
+            }
+        }
+    }
+
+    if latest.is_none() && until.is_some() {
+        while let Ok(Some(folder)) = timestamp_folders.next_entry().await {
+            if let Some(timestamp) = folder.file_name().to_str() {
+                if let Ok(timestamp) = timestamp.parse::<u64>() {
+                    if let Some(latest) = &latest {
+                        if timestamp < latest.0 {
+                            continue;
+                        }
+                    }
+
+                    if let Some(path) = find_path(timestamp, url).await? {
+                        latest = Some((timestamp, path));
+                    }
                 }
             }
         }

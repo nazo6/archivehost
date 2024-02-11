@@ -10,6 +10,7 @@ use crate::config::DATA_DIR;
 use self::{latest::serve_site_latest, timestamp::serve_site_with_timestamp};
 
 mod latest;
+mod serve_file;
 mod timestamp;
 mod utils;
 
