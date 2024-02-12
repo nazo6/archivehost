@@ -1,24 +1,15 @@
-use clap::Parser as _;
-
-use crate::config::init::init_config;
-
-use self::interface::{Cli, Commands};
+use crate::config::{cli::Commands, CLI};
 
 mod download;
-mod interface;
 mod serve;
 
 pub async fn start() -> eyre::Result<()> {
-    let cli = Cli::parse();
-
-    init_config(cli.clone().into());
-
-    match cli.command {
+    match CLI.command.clone() {
         Commands::Download(args) => {
             download::download(args).await?;
         }
-        Commands::Serve => {
-            serve::serve().await?;
+        Commands::Serve(args) => {
+            serve::serve(args).await?;
         }
         Commands::Config => {
             println!(

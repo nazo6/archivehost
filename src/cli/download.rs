@@ -11,10 +11,8 @@ use crate::{
         download::{download_page, get_latest_pages_index, DownloadStatus},
         wayback_client::WaybackClient,
     },
-    config::CONFIG,
+    config::{cli::DownloadArgs, CONFIG},
 };
-
-use super::interface::DownloadArgs;
 
 pub async fn download(args: DownloadArgs) -> eyre::Result<()> {
     let client = WaybackClient::default();

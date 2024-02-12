@@ -1,9 +1,9 @@
 use std::{collections::HashMap, path::Path};
 
+use crate::config::{CONFIG, POOL};
+
 use super::wayback_client::{CdxLine, CdxMatchType, CdxOptions, WaybackClient};
 use eyre::OptionExt;
-
-use crate::config::{CONFIG, DOWNLOAD_DIR};
 
 /// Get the latest index of pages from the web archive
 pub async fn get_latest_pages_index(
@@ -88,11 +88,11 @@ pub async fn download_page(
 
     let path = path.trim_start_matches('/');
 
-    let save_path = Path::new(&*DOWNLOAD_DIR)
-        .join(&record.timestamp)
+    let save_path_rel = Path::new(&record.timestamp)
         .join(url.scheme())
         .join(host)
         .join(path);
+    let save_path = Path::new(&CONFIG.download_dir()).join(&save_path_rel);
 
     if save_path.exists() {
         return Ok(DownloadStatus::Skipped("File already exists".to_string()));
@@ -102,6 +102,25 @@ pub async fn download_page(
     let save_dir = save_path.parent().unwrap();
     tokio::fs::create_dir_all(&save_dir).await?;
     tokio::fs::write(&save_path, resp.bytes().await?).await?;
+
+    let status_code = record.status_code.map(|v| v.as_u16());
+    let url = url.to_string();
+    let save_path_rel = save_path_rel.to_string_lossy();
+
+    sqlx::query!(
+        "
+        INSERT INTO archives 
+            (url, mime, timestamp, status, save_path)
+            VALUES (?, ?, ?, ?, ?)
+        ",
+        url,
+        record.mime,
+        record.timestamp,
+        status_code,
+        save_path_rel
+    )
+    .execute(&*POOL)
+    .await?;
 
     Ok::<DownloadStatus, eyre::Report>(DownloadStatus::Done)
 }

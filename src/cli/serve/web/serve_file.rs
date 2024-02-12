@@ -44,7 +44,7 @@ pub async fn serve_file(path: &Path, orig_url: &Url, timestamp: Option<u64>) -> 
             host,
             &format!(
                 "{}/web/{}/{}://{}",
-                CONFIG.get_host(),
+                CONFIG.serve.get_host(),
                 timestamp
                     .map(|t| t.to_string())
                     .unwrap_or_else(|| "latest".to_string()),

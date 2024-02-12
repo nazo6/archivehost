@@ -32,3 +32,4 @@ sqlx = { version = "0.7.3", features = ["runtime-tokio", "sqlite"] }
 dirs = "5.0.1"
 confy = "0.6.0"
 inter-struct = "0.2.1"
+derivative = "2.2.0"

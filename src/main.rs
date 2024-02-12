@@ -10,6 +10,9 @@ async fn main() -> eyre::Result<()> {
         .pretty()
         .init();
 
+    let _ = &*crate::config::CONFIG;
+    let _ = &*crate::config::POOL;
+
     cli::start().await?;
 
     Ok(())

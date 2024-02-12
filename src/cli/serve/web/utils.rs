@@ -4,7 +4,7 @@ use tokio::fs::metadata;
 use tracing::debug;
 use url::Url;
 
-use crate::config::DOWNLOAD_DIR;
+use crate::config::CONFIG;
 
 /// !!! This must be called after host is checked to exist.
 async fn find_path(timestamp: u64, url: &Url) -> Result<Option<PathBuf>, eyre::Report> {
@@ -20,7 +20,8 @@ async fn find_path(timestamp: u64, url: &Url) -> Result<Option<PathBuf>, eyre::R
         return Err(eyre::eyre!("Unsupported scheme"));
     };
 
-    let base = Path::new(&*DOWNLOAD_DIR);
+    let download_dir = CONFIG.download_dir();
+    let base = Path::new(&download_dir);
     let path = Path::new(url.host_str().ok_or(eyre::eyre!("No host"))?)
         .join(Path::new(&urlencoding::decode(url.path())?.into_owned()).strip_prefix("/")?);
 
@@ -76,7 +77,7 @@ pub async fn find_latest_page(
 
     let mut latest: Option<(u64, PathBuf)> = None;
 
-    let Ok(mut timestamp_folders) = tokio::fs::read_dir(&*DOWNLOAD_DIR).await else {
+    let Ok(mut timestamp_folders) = tokio::fs::read_dir(CONFIG.download_dir()).await else {
         return Ok(None);
     };
     while let Ok(Some(folder)) = timestamp_folders.next_entry().await {

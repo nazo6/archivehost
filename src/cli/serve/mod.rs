@@ -3,12 +3,12 @@ use tower::Layer as _;
 use tower_http::{normalize_path::NormalizePathLayer, trace::TraceLayer};
 use tracing::info;
 
-use crate::config::CONFIG;
+use crate::config::{cli::ServeArgs, CONFIG};
 
 mod asset;
 mod web;
 
-pub async fn serve() -> eyre::Result<()> {
+pub async fn serve(_args: ServeArgs) -> eyre::Result<()> {
     let app = NormalizePathLayer::trim_trailing_slash().layer(
         Router::new()
             .route("/sw.js", get(asset::sw_js))
