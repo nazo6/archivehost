@@ -15,24 +15,24 @@ pub(super) struct Cli {
     /// It is recommended to set this less than 4, otherwise the download error may occur.
     /// Default is 1.
     #[arg(short, long)]
-    pub concurrency: Option<usize>,
+    concurrency: Option<usize>,
 
     /// Directory to save the downloaded files.
     /// Default is [`dirs::data_dir()`] + "/archivehost"
     #[arg(short, long)]
-    pub root_dir: Option<PathBuf>,
+    root_dir: Option<PathBuf>,
 
     /// Port to serve the downloaded website and manager.
     /// Default is 3000.
     #[arg(short, long)]
-    pub port: Option<u16>,
+    port: Option<u16>,
 
     /// Hostname to serve the downloaded website and manager.
     /// This is only used to rewrite links using this value when serving the downloaded site.
     /// Default is "localhost:{port}"
     #[clap(verbatim_doc_comment)]
     #[arg(long)]
-    pub host: Option<String>,
+    host: Option<String>,
 }
 
 #[derive(Subcommand, Clone)]
@@ -41,7 +41,7 @@ pub(super) enum Commands {
     Download(DownloadArgs),
 
     /// Launch the website and manager
-    Serve(ServeArgs),
+    Serve,
 
     /// View config.
     /// Config load strategy:
@@ -63,12 +63,6 @@ pub(super) struct DownloadArgs {
     /// Timestamp to search to
     #[arg(long)]
     pub to: Option<String>,
-}
-
-#[derive(Args, Clone)]
-pub(super) struct ServeArgs {
-    #[arg(short, long, default_value_t = 3000)]
-    pub port: u16,
 }
 
 impl From<Cli> for ConfigOverride {

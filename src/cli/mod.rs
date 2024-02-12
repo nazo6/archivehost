@@ -17,8 +17,8 @@ pub async fn start() -> eyre::Result<()> {
         Commands::Download(args) => {
             download::download(args).await?;
         }
-        Commands::Serve(args) => {
-            serve::serve(args).await?;
+        Commands::Serve => {
+            serve::serve().await?;
         }
         Commands::Config => {
             println!(
