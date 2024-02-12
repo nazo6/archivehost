@@ -23,7 +23,7 @@ $ archivehost --help
 ### Download
 
 ```bash
-$ archivehost download <url> [--concurrency <concurrency>] [--output <output>]
+$ archivehost download <url> [--concurrency <concurrency>] [--from <from>] [--to <to>]
 ```
 
 File will be save to `~/.local/share/archivehost` on Linux and
@@ -33,7 +33,7 @@ File will be save to `~/.local/share/archivehost` on Linux and
 ### Serve
 
 ```bash
-$ archivehost serve
+$ archivehost serve [--port <port>] [--host <host>]
 ```
 
 By default, the server will run on port 8080. You can change the port by using
