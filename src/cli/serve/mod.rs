@@ -4,7 +4,7 @@ use tower::Layer as _;
 use tower_http::{normalize_path::NormalizePathLayer, trace::TraceLayer};
 use tracing::info;
 
-use super::ServeArgs;
+use super::interface::ServeArgs;
 
 mod asset;
 mod web;

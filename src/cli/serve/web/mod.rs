@@ -5,7 +5,7 @@ use axum::{
 };
 use http::StatusCode;
 
-use crate::config::DATA_DIR;
+use crate::config::DOWNLOAD_DIR;
 
 use self::{latest::serve_site_latest, timestamp::serve_site_with_timestamp};
 
@@ -29,14 +29,12 @@ pub fn route() -> Router {
 
 #[tracing::instrument(skip_all, err(Debug))]
 pub async fn site_list() -> Result<impl IntoResponse, (StatusCode, String)> {
-    let mut folders = tokio::fs::read_dir(DATA_DIR.get().unwrap())
-        .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to read data dir: {}", e),
-            )
-        })?;
+    let mut folders = tokio::fs::read_dir(&*DOWNLOAD_DIR).await.map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to read data dir: {}", e),
+        )
+    })?;
     let mut lis = String::new();
     while let Ok(Some(folder)) = folders.next_entry().await {
         lis.push_str(&format!(

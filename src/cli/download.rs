@@ -6,12 +6,15 @@ use indicatif::{ProgressBar, ProgressStyle};
 use tokio::signal;
 use tracing::info;
 
-use crate::common::{
-    download::{download_page, get_latest_pages_index, DownloadStatus},
-    wayback_client::WaybackClient,
+use crate::{
+    common::{
+        download::{download_page, get_latest_pages_index, DownloadStatus},
+        wayback_client::WaybackClient,
+    },
+    config::CONFIG,
 };
 
-use super::DownloadArgs;
+use super::interface::DownloadArgs;
 
 pub async fn download(args: DownloadArgs) -> eyre::Result<()> {
     let client = WaybackClient::default();
@@ -109,7 +112,7 @@ pub async fn download(args: DownloadArgs) -> eyre::Result<()> {
         .collect::<Vec<_>>();
 
     futures::stream::iter(tasks)
-        .buffer_unordered(args.concurrency as usize)
+        .buffer_unordered(CONFIG.download.concurrency)
         .collect::<Vec<_>>()
         .await;
 

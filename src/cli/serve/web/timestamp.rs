@@ -4,7 +4,7 @@ use axum::{
 };
 use http::StatusCode;
 
-use crate::app::serve::web::{serve_file::serve_file, utils::find_latest_page};
+use super::{serve_file::serve_file, utils::find_latest_page};
 
 #[tracing::instrument(err(Debug, level = "warn"))]
 pub async fn serve_site_with_timestamp(

@@ -1,4 +1,4 @@
-mod app;
+mod cli;
 mod common;
 mod config;
 
@@ -10,7 +10,7 @@ async fn main() -> eyre::Result<()> {
         .pretty()
         .init();
 
-    app::start().await?;
+    cli::start().await?;
 
     Ok(())
 }

@@ -3,7 +3,7 @@ use std::{collections::HashMap, path::Path};
 use super::wayback_client::{CdxLine, CdxMatchType, CdxOptions, WaybackClient};
 use eyre::OptionExt;
 
-use crate::config::{DATA_DIR, DEFAULT_IGNORE_MIME_TYPES};
+use crate::config::{CONFIG, DOWNLOAD_DIR};
 
 /// Get the latest index of pages from the web archive
 pub async fn get_latest_pages_index(
@@ -57,12 +57,17 @@ pub enum DownloadStatus {
     Done,
     Skipped(String),
 }
-/// Download and save page to DATA_DIR
+/// Download and save page to DOWNLOAD_DIR
 pub async fn download_page(
     client: &WaybackClient,
     record: &CdxLine,
 ) -> Result<DownloadStatus, eyre::Report> {
-    if DEFAULT_IGNORE_MIME_TYPES.contains(&record.mime.as_str()) {
+    if CONFIG
+        .download
+        .ignored_mime_types
+        .iter()
+        .any(|v| record.mime.starts_with(v))
+    {
         return Ok(DownloadStatus::Skipped(format!(
             "Ignored mime: {}",
             record.mime
@@ -83,7 +88,7 @@ pub async fn download_page(
 
     let path = path.trim_start_matches('/');
 
-    let save_path = Path::new(DATA_DIR.get().unwrap())
+    let save_path = Path::new(&*DOWNLOAD_DIR)
         .join(&record.timestamp)
         .join(url.scheme())
         .join(host)
