@@ -1,6 +1,16 @@
 # Archivehost - Wayback machine downloader & server
 
-Program to download and serve the wayback machine archives.
+Program to batch download and serve the wayback machine archives.
+
+## Install
+
+Currently, binary is not available. You can install by running:
+
+```bash
+$ git clone https://github.com/nazo6/archivehost
+$ cd archivehost
+$ cargo install --path .
+```
 
 ## Usage
 
