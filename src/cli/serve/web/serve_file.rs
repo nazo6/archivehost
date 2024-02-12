@@ -5,7 +5,7 @@ use http::{header, StatusCode};
 use tokio_util::io::ReaderStream;
 use url::Url;
 
-use super::super::HOST;
+use crate::config::CONFIG;
 
 pub async fn serve_file(path: &Path, orig_url: &Url, timestamp: Option<u64>) -> impl IntoResponse {
     let file = match tokio::fs::File::open(path).await {
@@ -44,7 +44,7 @@ pub async fn serve_file(path: &Path, orig_url: &Url, timestamp: Option<u64>) -> 
             host,
             &format!(
                 "{}/web/{}/{}://{}",
-                HOST.get().unwrap(),
+                CONFIG.get_host(),
                 timestamp
                     .map(|t| t.to_string())
                     .unwrap_or_else(|| "latest".to_string()),

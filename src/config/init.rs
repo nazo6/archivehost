@@ -14,6 +14,7 @@ pub struct DownloadConfigOverride {
 
 pub struct ServeConfigOverride {
     pub port: Option<u16>,
+    pub host: Option<String>,
 }
 
 macro_rules! merge {
@@ -23,6 +24,11 @@ macro_rules! merge {
         }
     };
 }
+macro_rules! merge_optional {
+    ($path:ident, $dst:expr, $src:expr) => {
+        $dst.$path = $src.$path;
+    };
+}
 
 pub fn init_config(merge_config: ConfigOverride) {
     let mut config = confy::load::<Config>(PKG_NAME, None).expect("Failed to load config");
@@ -30,6 +36,7 @@ pub fn init_config(merge_config: ConfigOverride) {
     merge!(root, config, merge_config);
     merge!(concurrency, config.download, merge_config.download);
     merge!(port, config.serve, merge_config.serve);
+    merge_optional!(host, config.serve, merge_config.serve);
 
     CONFIG.set(config).expect("Failed to set config");
     DOWNLOAD_DIR

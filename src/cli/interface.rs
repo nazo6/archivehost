@@ -26,24 +26,40 @@ pub(super) struct Cli {
     /// Default is 3000.
     #[arg(short, long)]
     pub port: Option<u16>,
+
+    /// Hostname to serve the downloaded website and manager.
+    /// This is only used to rewrite links using this value when serving the downloaded site.
+    /// Default is "localhost:{port}"
+    #[clap(verbatim_doc_comment)]
+    #[arg(long)]
+    pub host: Option<String>,
 }
 
 #[derive(Subcommand, Clone)]
 pub(super) enum Commands {
     /// Download website from the Wayback Machine
     Download(DownloadArgs),
+
     /// Launch the website and manager
     Serve(ServeArgs),
-    /// View config
+
+    /// View config.
+    /// Config load strategy:
+    ///   1. Loaded from the config file. (Usually in $XDG_DATA_HOME/archivehost)
+    ///   2. Fallback to the default value.
+    ///   3. Overrided with the CLI arguments.
+    #[clap(verbatim_doc_comment)]
     Config,
 }
 
 #[derive(Args, Clone)]
 pub(super) struct DownloadArgs {
     pub url: String,
+
     /// Timestamp to search from
     #[arg(long)]
     pub from: Option<String>,
+
     /// Timestamp to search to
     #[arg(long)]
     pub to: Option<String>,
@@ -62,7 +78,10 @@ impl From<Cli> for ConfigOverride {
             download: DownloadConfigOverride {
                 concurrency: cli.concurrency,
             },
-            serve: ServeConfigOverride { port: cli.port },
+            serve: ServeConfigOverride {
+                port: cli.port,
+                host: cli.host,
+            },
         }
     }
 }

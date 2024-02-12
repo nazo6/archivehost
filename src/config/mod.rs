@@ -25,6 +25,7 @@ pub struct DownloadConfig {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct ServeConfig {
     pub port: u16,
+    pub host: Option<String>,
 }
 
 impl Default for Config {
@@ -49,7 +50,19 @@ impl Default for DownloadConfig {
 
 impl Default for ServeConfig {
     fn default() -> Self {
-        Self { port: 3000 }
+        Self {
+            port: 3000,
+            host: None,
+        }
+    }
+}
+
+impl Config {
+    pub fn get_host(&self) -> String {
+        self.serve
+            .host
+            .clone()
+            .unwrap_or_else(|| format!("localhost:{}", self.serve.port))
     }
 }
 
