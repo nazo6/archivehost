@@ -4,7 +4,6 @@ use colored::Colorize as _;
 use futures::StreamExt as _;
 use indicatif::{ProgressBar, ProgressStyle};
 use tokio::signal;
-use tracing::info;
 
 use crate::{
     common::{
@@ -14,12 +13,13 @@ use crate::{
     config::{cli::DownloadArgs, CONFIG},
 };
 
+#[tracing::instrument(skip(args), err)]
 pub async fn download(args: DownloadArgs) -> eyre::Result<()> {
     let client = WaybackClient::default();
 
-    info!("Fetching index...");
+    println!("Fetching index...");
     let index = get_latest_pages_index(&client, args.url, args.from, args.to).await?;
-    info!("{} entries found.", index.len());
+    println!("{} entries found.", index.len());
 
     let pb = ProgressBar::new(index.len() as u64);
     let pb_style = ProgressStyle::default_bar()

@@ -1,6 +1,9 @@
 use std::{collections::HashMap, path::Path};
 
-use crate::config::{CONFIG, POOL};
+use crate::{
+    config::{CONFIG, CONN},
+    db::archive,
+};
 
 use super::wayback_client::{CdxLine, CdxMatchType, CdxOptions, WaybackClient};
 use eyre::OptionExt;
@@ -75,52 +78,66 @@ pub async fn download_page(
     }
 
     let url = url::Url::parse(&record.original)?;
-    let host = url.host_str().ok_or_else(|| eyre::eyre!("No host found"))?;
-    let path = url.path().to_string();
-    let path = urlencoding::decode(&path)?;
-    let path = if path.ends_with('/') {
-        path + "index.html"
-    } else if record.mime.starts_with("text/html") && !path.ends_with(".html") {
-        path + "/index.html"
-    } else {
+    let url_host = url.host_str().ok_or_else(|| eyre::eyre!("No host found"))?;
+    let url_path = url.path();
+    let url_scheme = url.scheme();
+
+    let file_path = {
+        let path = urlencoding::decode(url_path)?;
+        let path = if path.ends_with('/') {
+            path + "index.html"
+        } else if record.mime.starts_with("text/html") && !path.ends_with(".html") {
+            path + "/index.html"
+        } else {
+            path
+        };
+
+        let path = path.trim_start_matches('/').to_string();
         path
     };
 
-    let path = path.trim_start_matches('/');
-
-    let save_path_rel = Path::new(&record.timestamp)
+    let timestamp_str = record.timestamp.to_string();
+    let save_path_rel = Path::new(&timestamp_str)
         .join(url.scheme())
-        .join(host)
-        .join(path);
+        .join(url_host)
+        .join(file_path);
     let save_path = Path::new(&CONFIG.download_dir()).join(&save_path_rel);
 
-    if save_path.exists() {
+    if CONN
+        .archive()
+        .find_unique(archive::url_scheme_url_host_url_path_timestamp(
+            url_scheme.to_string(),
+            url_host.to_string(),
+            url_path.to_string(),
+            record.timestamp.0.into(),
+        ))
+        .exec()
+        .await?
+        .is_some()
+    {
         return Ok(DownloadStatus::Skipped("File already exists".to_string()));
     }
 
-    let resp = client.get_page(&record.timestamp, &record.original).await?;
+    let resp = client.get_page(&timestamp_str, &record.original).await?;
     let save_dir = save_path.parent().unwrap();
     tokio::fs::create_dir_all(&save_dir).await?;
     tokio::fs::write(&save_path, resp.bytes().await?).await?;
 
     let status_code = record.status_code.map(|v| v.as_u16());
-    let url = url.to_string();
     let save_path_rel = save_path_rel.to_string_lossy();
 
-    sqlx::query!(
-        "
-        INSERT INTO archives 
-            (url, mime, timestamp, status, save_path)
-            VALUES (?, ?, ?, ?, ?)
-        ",
-        url,
-        record.mime,
-        record.timestamp,
-        status_code,
-        save_path_rel
-    )
-    .execute(&*POOL)
-    .await?;
+    CONN.archive()
+        .create(
+            url_scheme.to_string(),
+            url_host.to_string(),
+            url_path.to_string(),
+            record.timestamp.0.into(),
+            record.mime.clone(),
+            save_path_rel.to_string(),
+            vec![archive::status::set(status_code.map(|v| v as i32))],
+        )
+        .exec()
+        .await?;
 
     Ok::<DownloadStatus, eyre::Report>(DownloadStatus::Done)
 }

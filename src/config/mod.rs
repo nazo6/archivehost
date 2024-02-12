@@ -2,10 +2,13 @@ use std::path::PathBuf;
 
 pub mod cli;
 mod interface;
-use clap::Parser as _;
+
 pub use interface::*;
+
+use clap::Parser as _;
 use once_cell::sync::Lazy;
-use sqlx::SqlitePool;
+
+use crate::db::PrismaClient;
 
 pub struct ConfigOverride {
     pub root: Option<PathBuf>,
@@ -37,9 +40,8 @@ fn get_config(or: ConfigOverride) -> eyre::Result<Config> {
 
     if config.root.exists() && !config.root.is_dir() {
         panic!("Data dir is not a directory");
-    } else {
-        std::fs::create_dir_all(&*config.root).expect("Failed to create data dir");
     }
+    std::fs::create_dir_all(&*config.root).expect("Failed to create data dir");
 
     Ok(config)
 }
@@ -69,16 +71,14 @@ pub static CONFIG: Lazy<Config> = Lazy::new(|| {
     get_config(config_override).unwrap()
 });
 
-pub static POOL: Lazy<SqlitePool> = Lazy::new(|| {
-    tokio::runtime::Runtime::new().unwrap().block_on(async {
-        let pool = SqlitePool::connect(&CONFIG.root.join("db.sqlite?mode=rwc").to_string_lossy())
+pub static CONN: Lazy<PrismaClient> = Lazy::new(|| {
+    futures::executor::block_on(async {
+        let url = format!("file://{}/db", CONFIG.root.to_string_lossy());
+        PrismaClient::_builder()
+            .with_url(url)
+            .build()
             .await
-            .expect("Failed to connect to db");
-        sqlx::migrate!()
-            .run(&pool)
-            .await
-            .expect("Failed to migrate");
-        pool
+            .expect("Failed to connect")
     })
 });
 

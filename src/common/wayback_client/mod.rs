@@ -7,6 +7,8 @@ use serde::Serialize;
 mod error;
 use error::Result;
 
+use super::timestamp::Timestamp;
+
 pub struct WaybackClient {
     pub client: reqwest::Client,
     pub base_url: String,
@@ -82,7 +84,7 @@ pub struct CdxData {
 #[derive(Debug)]
 pub struct CdxLine {
     pub url_key: String,
-    pub timestamp: String,
+    pub timestamp: Timestamp,
     pub original: String,
     pub mime: String,
     pub status_code: Option<StatusCode>,
@@ -165,7 +167,9 @@ impl WaybackClient {
             let mut line = line.into_iter();
             data.push(CdxLine {
                 url_key: line.next().unwrap(),
-                timestamp: line.next().unwrap(),
+                timestamp: Timestamp::from_wb_ts(&line.next().unwrap()).map_err(|e| {
+                    error::Error::Other(format!("Failed to parse timestamp: {}", e))
+                })?,
                 original: line.next().unwrap(),
                 mime: line.next().unwrap(),
                 status_code: line.next().unwrap().parse().ok(),

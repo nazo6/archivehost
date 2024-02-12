@@ -1,6 +1,12 @@
+use tracing::info;
+
+use crate::config::CONN;
+
 mod cli;
 mod common;
 mod config;
+#[allow(warnings, unused)]
+mod db;
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
@@ -11,7 +17,17 @@ async fn main() -> eyre::Result<()> {
         .init();
 
     let _ = &*crate::config::CONFIG;
-    let _ = &*crate::config::POOL;
+
+    #[cfg(debug_assertions)]
+    {
+        info!("Migrating in debug mode: forcing reset");
+        CONN._db_push().accept_data_loss().force_reset().await?;
+    }
+    #[cfg(not(debug_assertions))]
+    {
+        info!("Migrating in release mode");
+        CONN._migrate_deploy().await?;
+    }
 
     cli::start().await?;
 
