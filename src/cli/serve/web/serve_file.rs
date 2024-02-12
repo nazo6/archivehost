@@ -5,9 +5,19 @@ use http::{header, StatusCode};
 use tokio_util::io::ReaderStream;
 use url::Url;
 
-use crate::config::CONFIG;
+use crate::{common::timestamp::Timestamp, config::CONFIG};
 
-pub async fn serve_file(path: &Path, orig_url: &Url, timestamp: Option<u64>) -> impl IntoResponse {
+/// Serve file but replace some URLs.
+/// This is far from perfect but works well enough for now.
+///
+/// Imrovements ideas:
+///    - Use service worker
+///    - Use proxy
+pub async fn serve_file(
+    path: &Path,
+    orig_url: &Url,
+    timestamp: Option<Timestamp>,
+) -> impl IntoResponse {
     let file = match tokio::fs::File::open(path).await {
         Ok(file) => file,
         Err(err) => return Err((StatusCode::NOT_FOUND, format!("File not found: {}", err))),
@@ -41,9 +51,9 @@ pub async fn serve_file(path: &Path, orig_url: &Url, timestamp: Option<u64>) -> 
         let new_text = text.replace(&format!("https://{host}"), &format!("http://{host}"));
 
         let new_text = new_text.replace(
-            host,
+            &format!("http://{host}"),
             &format!(
-                "{}/web/{}/{}://{}",
+                "http://{}/web/{}/{}://{}",
                 CONFIG.serve.get_host(),
                 timestamp
                     .map(|t| t.to_string())

@@ -23,6 +23,9 @@ pub enum Commands {
     /// Launch the website and manager
     Serve(ServeArgs),
 
+    /// Remove database entry that is not found in the filesystem.
+    FixDb,
+
     /// View config.
     /// Config load strategy:
     ///   1. Loaded from the config file. (Usually in $XDG_DATA_HOME/archivehost)

@@ -1,123 +1,99 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
-use tokio::fs::metadata;
-use tracing::debug;
 use url::Url;
 
-use crate::config::CONFIG;
+use crate::{
+    common::timestamp::Timestamp,
+    config::{CONFIG, CONN},
+    db::archive,
+};
 
-/// !!! This must be called after host is checked to exist.
-async fn find_path(timestamp: u64, url: &Url) -> Result<Option<PathBuf>, eyre::Report> {
-    let timestamp = timestamp.to_string();
-
-    let mut check_paths = vec![];
-    let scheme = url.scheme();
-    let scheme_alt = if scheme == "http" {
-        "https"
-    } else if scheme == "https" {
-        "http"
-    } else {
-        return Err(eyre::eyre!("Unsupported scheme"));
+async fn find(
+    until: Option<&Timestamp>,
+    host: &str,
+    path: &str,
+) -> Result<Option<archive::Data>, eyre::Error> {
+    let mut find = vec![
+        archive::url_scheme::in_vec(vec!["http".to_string(), "https".to_string()]),
+        archive::url_host::equals(host.to_string()),
+        archive::url_path::equals(path.to_string()),
+    ];
+    if let Some(until) = until {
+        find.push(archive::timestamp::lte(until.0.into()))
     };
 
-    let download_dir = CONFIG.download_dir();
-    let base = Path::new(&download_dir);
-    let path = Path::new(url.host_str().ok_or(eyre::eyre!("No host"))?)
-        .join(Path::new(&urlencoding::decode(url.path())?.into_owned()).strip_prefix("/")?);
+    let mut data = CONN
+        .archive()
+        .find_many(find)
+        .order_by(archive::timestamp::order(crate::db::SortOrder::Desc))
+        .take(1)
+        .exec()
+        .await?;
 
-    check_paths.push(base.join(&timestamp).join(scheme).join(&path));
+    let Some(data) = data.pop() else {
+        return Ok(None);
+    };
 
-    if !url.path().ends_with(".html") {
-        check_paths.push(
-            base.join(&timestamp)
-                .join("http")
-                .join(&path)
-                .join("index.html"),
-        );
-    }
-
-    check_paths.push(base.join(&timestamp).join(scheme_alt).join(&path));
-
-    if !url.path().ends_with(".html") {
-        check_paths.push(
-            base.join(timestamp)
-                .join("https")
-                .join(&path)
-                .join("index.html"),
-        );
-    }
-
-    for path in check_paths {
-        if let Ok(metadata) = metadata(&path).await {
-            if metadata.is_file() {
-                debug!("Found path: {:?}", path);
-                return Ok(Some(path));
-            }
-        }
-    }
-
-    Ok(None)
+    Ok(Some(data))
 }
 
 /// Find the latest page for a site and path.
 #[tracing::instrument(err)]
 pub async fn find_latest_page(
-    until: Option<u64>,
+    until: Option<&Timestamp>,
     url: &Url,
-) -> eyre::Result<Option<(u64, PathBuf)>> {
-    if url.host_str().is_none() {
-        return Err(eyre::eyre!("No host in URL"));
+) -> eyre::Result<Option<(Timestamp, PathBuf)>> {
+    let url_scheme = url.scheme();
+    if url_scheme != "http" && url_scheme != "https" {
+        return Err(eyre::eyre!("Unsupported scheme"));
+    };
+    let url_host = url.host_str().ok_or_else(|| eyre::eyre!("No host found"))?;
+
+    let url_with_index_html = {
+        let mut url = url.clone();
+        let path = url.path();
+        let path = if path.ends_with('/') {
+            format!("{}index.html", path)
+        } else {
+            format!("{}/index.html", path)
+        };
+        url.set_path(&path);
+        url
+    };
+    let url_alt = {
+        let mut url = url.clone();
+        let path = url.path();
+        let path = if path.ends_with('/') {
+            path.strip_suffix('/').unwrap().to_string()
+        } else {
+            format!("{}/", path)
+        };
+        url.set_path(&path);
+        url
     };
 
-    if let Some(until) = until {
-        if let Some(path) = find_path(until, url).await? {
-            return Ok(Some((until, path)));
-        }
+    let download_dir = CONFIG.download_dir();
+
+    if let Some(data) = find(until, url_host, url.path()).await? {
+        return Ok(Some((
+            Timestamp(data.timestamp.to_utc()),
+            download_dir.join(data.save_path),
+        )));
     }
 
-    let mut latest: Option<(u64, PathBuf)> = None;
-
-    let Ok(mut timestamp_folders) = tokio::fs::read_dir(CONFIG.download_dir()).await else {
-        return Ok(None);
-    };
-    while let Ok(Some(folder)) = timestamp_folders.next_entry().await {
-        if let Some(timestamp) = folder.file_name().to_str() {
-            if let Ok(timestamp) = timestamp.parse::<u64>() {
-                if let Some(until) = until {
-                    if timestamp > until {
-                        continue;
-                    }
-                }
-                if let Some(latest) = &latest {
-                    if timestamp < latest.0 {
-                        continue;
-                    }
-                }
-
-                if let Some(path) = find_path(timestamp, url).await? {
-                    latest = Some((timestamp, path));
-                }
-            }
-        }
+    if let Some(data) = find(until, url_host, url_with_index_html.path()).await? {
+        return Ok(Some((
+            Timestamp(data.timestamp.to_utc()),
+            download_dir.join(data.save_path),
+        )));
     }
 
-    if latest.is_none() && until.is_some() {
-        while let Ok(Some(folder)) = timestamp_folders.next_entry().await {
-            if let Some(timestamp) = folder.file_name().to_str() {
-                if let Ok(timestamp) = timestamp.parse::<u64>() {
-                    if let Some(latest) = &latest {
-                        if timestamp < latest.0 {
-                            continue;
-                        }
-                    }
-
-                    if let Some(path) = find_path(timestamp, url).await? {
-                        latest = Some((timestamp, path));
-                    }
-                }
-            }
-        }
+    if let Some(data) = find(until, url_host, url_alt.path()).await? {
+        return Ok(Some((
+            Timestamp(data.timestamp.to_utc()),
+            download_dir.join(data.save_path),
+        )));
     }
 
-    Ok(latest)
+    Ok(None)
 }
