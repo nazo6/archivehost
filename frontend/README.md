@@ -9,7 +9,9 @@ Currently, binary is not available. You can install by running:
 ```bash
 $ git clone https://github.com/nazo6/archivehost
 $ cd archivehost
-$ cargo install --path .
+$ pnpm i
+$ cargo prisma generate
+$ pnpm inst
 ```
 
 ## Usage
@@ -36,7 +38,7 @@ File will be save to `~/.local/share/archivehost` on Linux and
 $ archivehost serve [--port <port>] [--host <host>]
 ```
 
-By default, the server will run on port 8080. You can change the port by using
+By default, the server will run on port 3030. You can change the port by using
 the `--port` flag.
 
 #### Serve url

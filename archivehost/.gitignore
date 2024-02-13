@@ -1,0 +1,6 @@
+/target
+output
+.env
+src/db/
+db
+db-journal

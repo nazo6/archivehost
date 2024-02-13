@@ -1,0 +1,20 @@
+{
+  "name": "archivehost",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "kill": "pkill archivehost",
+    "prisma-generate": "cd archivehost && cargo prisma generate",
+    "dev": "concurrently -c 'blue,green' npm:dev:*",
+    "dev:front": "cd frontend && pnpm dev",
+    "dev:back": "cd archivehost && cargo watch -x 'run -- serve'",
+    "build": "npm run build:front && npm run build:back",
+    "build:front": "cd frontend && pnpm build",
+    "build:back": "cd archivehost && cargo build",
+    "inst": "npm run build:front && cd archivehost && cargo install --path ."
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
