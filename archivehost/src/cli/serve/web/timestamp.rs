@@ -4,7 +4,10 @@ use axum::{
 };
 use http::StatusCode;
 
-use crate::cli::serve::web::utils::{parse_timestamp, parse_url};
+use crate::cli::serve::web::{
+    dummy_file::serve_dummy_file,
+    utils::{parse_timestamp, parse_url},
+};
 
 use super::{serve_file::serve_file, utils::find_latest_page};
 
@@ -26,7 +29,8 @@ pub async fn serve_site_with_timestamp(
         })?;
 
     let Some((latest_timestamp, latest_path)) = latest else {
-        return Err((StatusCode::NOT_FOUND, "Not found".to_string()));
+        return Ok(serve_dummy_file(&url).await.into_response());
+        // return Err((StatusCode::NOT_FOUND, "Not found".to_string()));
     };
 
     tracing::debug!("Serving file: {:?} ({:?})", latest_path, latest_timestamp);

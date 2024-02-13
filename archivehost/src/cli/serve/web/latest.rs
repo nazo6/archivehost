@@ -1,7 +1,7 @@
 use axum::{extract::Path, response::IntoResponse};
 use http::StatusCode;
 
-use crate::cli::serve::web::utils::parse_url;
+use crate::cli::serve::web::{dummy_file::serve_dummy_file, utils::parse_url};
 
 use super::{serve_file::serve_file, utils::find_latest_page};
 
@@ -11,12 +11,18 @@ pub async fn serve_site_latest(
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     let url =
         parse_url(&url).map_err(|e| (StatusCode::BAD_REQUEST, format!("Bad request: {}", e)))?;
-    let (_latest_ts, latest_path) = find_latest_page(None, &url)
+    let latest = find_latest_page(None, &url)
         .await
-        .map_err(|e| (StatusCode::BAD_REQUEST, format!("Bad request: {}", e)))?
-        .ok_or_else(|| (StatusCode::NOT_FOUND, "Not found".to_string()))?;
+        .map_err(|e| (StatusCode::BAD_REQUEST, format!("Bad request: {}", e)))?;
 
-    tracing::debug!("Serving file: {:?}", latest_path);
+    let Some((latest_timestamp, latest_path)) = latest else {
+        return Ok(serve_dummy_file(&url).await.into_response());
+        // return Err((StatusCode::NOT_FOUND, "Not found".to_string()));
+    };
 
-    Ok(serve_file(&latest_path, &url, "latest").await)
+    tracing::debug!("Serving file: {:?} ({:?})", latest_path, latest_timestamp);
+
+    Ok(serve_file(&latest_path, &url, "latest")
+        .await
+        .into_response())
 }

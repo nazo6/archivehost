@@ -9,6 +9,7 @@ use crate::config::CONFIG;
 
 use self::{latest::serve_site_latest, timestamp::serve_site_with_timestamp};
 
+mod dummy_file;
 mod latest;
 mod serve_file;
 mod timestamp;
