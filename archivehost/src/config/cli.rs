@@ -13,6 +13,11 @@ pub struct Cli {
     /// Default is [`dirs::data_dir()`] + "/archivehost"
     #[arg(short, long)]
     pub root_dir: Option<PathBuf>,
+
+    /// Skip migration.
+    /// Warning: This is for development. Using this in production may cause data loss.
+    #[arg(long, default_value_t = false)]
+    pub skip_migration: bool,
 }
 
 #[derive(Subcommand, Clone)]

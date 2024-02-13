@@ -1,7 +1,6 @@
 {
   "name": "archivehost",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "scripts": {
     "kill": "pkill archivehost",
@@ -11,7 +10,7 @@
     "dev:back": "cd archivehost && cargo watch -x 'run -- serve'",
     "build": "npm run build:front && npm run build:back",
     "build:front": "cd frontend && pnpm build",
-    "build:back": "cd archivehost && cargo build",
+    "build:back": "cd archivehost && cargo build --release",
     "inst": "npm run build:front && cd archivehost && cargo install --path ."
   },
   "devDependencies": {

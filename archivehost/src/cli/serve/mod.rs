@@ -1,20 +1,22 @@
-use axum::{extract::Request, routing::get, Router, ServiceExt};
+use axum::{extract::Request, Router, ServiceExt};
 use tower::Layer as _;
 use tower_http::{normalize_path::NormalizePathLayer, trace::TraceLayer};
 use tracing::info;
 
 use crate::config::{cli::ServeArgs, CONFIG};
 
-mod asset;
+#[cfg(not(debug_assertions))]
+mod frontend;
 mod web;
 
 pub async fn serve(_args: ServeArgs) -> eyre::Result<()> {
-    let app = NormalizePathLayer::trim_trailing_slash().layer(
-        Router::new()
-            .route("/sw.js", get(asset::sw_js))
-            .nest("/web", web::route())
-            .layer(TraceLayer::new_for_http()),
-    );
+    let router = Router::new().nest("/web", web::route());
+
+    #[cfg(not(debug_assertions))]
+    let router = router.fallback(frontend::static_handler);
+
+    let app =
+        NormalizePathLayer::trim_trailing_slash().layer(router.layer(TraceLayer::new_for_http()));
 
     let listener = tokio::net::TcpListener::bind(("0.0.0.0", CONFIG.serve.port)).await?;
     info!("Listening on {}", listener.local_addr()?);
