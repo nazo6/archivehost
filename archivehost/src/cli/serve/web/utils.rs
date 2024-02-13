@@ -97,3 +97,25 @@ pub async fn find_latest_page(
 
     Ok(None)
 }
+
+pub fn parse_url(url: &str) -> Result<Url, eyre::Error> {
+    let url = if !url.starts_with("http") {
+        format!("http://{}", url)
+    } else {
+        url.to_string()
+    };
+    Url::parse(&url).map_err(|e| eyre::eyre!("Failed to parse url: {}", e))
+}
+
+#[tracing::instrument(err)]
+pub fn parse_timestamp(timestamp_str: &str) -> Result<Timestamp, eyre::Error> {
+    if let Ok(ts) = Timestamp::from_wb_ts(timestamp_str) {
+        Ok(ts)
+    } else if let Ok(ts) = Timestamp::from_date(timestamp_str) {
+        Ok(ts)
+    } else if let Ok(ts) = Timestamp::from_year(timestamp_str) {
+        Ok(ts)
+    } else {
+        Err(eyre::eyre!("Invalid timestamp"))
+    }
+}

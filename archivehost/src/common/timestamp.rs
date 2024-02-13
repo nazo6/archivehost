@@ -5,6 +5,7 @@ use std::{
 };
 
 use chrono::{prelude::*, DateTime};
+use eyre::OptionExt;
 
 #[derive(Debug, PartialEq, PartialOrd)]
 pub struct Timestamp(pub DateTime<Utc>);
@@ -18,6 +19,20 @@ impl Timestamp {
 
     pub fn to_wb_ts(&self) -> String {
         self.0.format("%Y%m%d%H%M%S").to_string()
+    }
+
+    pub fn from_year(s: &str) -> Result<Self, eyre::Report> {
+        let last_day = NaiveDate::from_ymd_opt(s.parse()?, 12, 31).ok_or_eyre("Invalid year")?;
+        let dt = last_day.and_hms_opt(0, 0, 0).unwrap().and_utc();
+        Ok(Timestamp(dt))
+    }
+
+    pub fn from_date(s: &str) -> Result<Self, chrono::ParseError> {
+        let dt = NaiveDate::parse_from_str(s, "%Y%m%d")?
+            .and_hms_opt(0, 0, 0)
+            .unwrap()
+            .and_utc();
+        Ok(Timestamp(dt))
     }
 }
 
