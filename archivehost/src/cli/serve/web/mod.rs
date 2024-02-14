@@ -6,6 +6,7 @@ use axum::{
 
 use self::{latest::serve_site_latest, timestamp::serve_site_with_timestamp};
 
+mod decode;
 mod dummy_file;
 mod latest;
 mod serve_file;

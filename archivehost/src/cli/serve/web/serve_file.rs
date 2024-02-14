@@ -7,6 +7,8 @@ use url::Url;
 
 use crate::config::CONFIG;
 
+use super::decode::decode_bytes;
+
 /// Serve file but replace some URLs.
 /// This is far from perfect but works well enough for now.
 ///
@@ -26,16 +28,16 @@ pub async fn serve_file(path: &Path, orig_url: &Url, timestamp_str: &str) -> imp
         ));
     };
 
-    let headers = [(header::CONTENT_TYPE, mime)];
+    let headers = [(header::CONTENT_TYPE, format!("{}; charset=utf-8", mime))];
 
     if mime == "text/html" {
         // let insert_code = include_str!("../../../../asset/loadSW.html");
-        let text = tokio::fs::read_to_string(path).await.map_err(|e| {
+        let text = decode_bytes(&tokio::fs::read(path).await.map_err(|e| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Failed to read file: {}", e),
             )
-        })?;
+        })?);
         // let new_text = format!("{}{}", insert_code, text);
         let Some(host) = orig_url.host_str() else {
             return Err((
