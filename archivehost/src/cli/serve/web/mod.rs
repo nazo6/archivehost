@@ -1,11 +1,8 @@
 use axum::{
     extract::Path,
-    response::{Html, IntoResponse, Redirect},
+    response::Redirect,
     routing::{get, Router},
 };
-use http::StatusCode;
-
-use crate::config::CONFIG;
 
 use self::{latest::serve_site_latest, timestamp::serve_site_with_timestamp};
 

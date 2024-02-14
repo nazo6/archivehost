@@ -1,24 +1,22 @@
-use crate::{
-    config::{CONFIG, CONN},
-    db::archive,
-};
+use crate::config::{CONFIG, CONN};
+
+use entity::archive::Entity as DbArchive;
+use sea_orm::EntityTrait;
 
 pub async fn fixdb() -> eyre::Result<()> {
-    let all_entries = CONN.archive().find_many(vec![]).exec().await?;
+    let entries = DbArchive::find().all(&*CONN).await?;
     let download_dir = CONFIG.download_dir();
-    for entry in all_entries {
+    for entry in entries {
         let path = entry.save_path;
         if tokio::fs::metadata(download_dir.join(&path)).await.is_err() {
-            match CONN
-                .archive()
-                .delete(archive::url_scheme_url_host_url_path_timestamp(
-                    entry.url_scheme,
-                    entry.url_host,
-                    entry.url_path,
-                    entry.timestamp,
-                ))
-                .exec()
-                .await
+            match DbArchive::delete_by_id((
+                entry.url_scheme,
+                entry.url_host,
+                entry.url_path,
+                entry.timestamp,
+            ))
+            .exec(&*CONN)
+            .await
             {
                 Ok(_) => {
                     println!("Deleted: {:?}", path);

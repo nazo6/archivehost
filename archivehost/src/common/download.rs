@@ -1,19 +1,21 @@
 use std::{collections::HashMap, path::Path};
 
-use crate::{
-    config::{CONFIG, CONN},
-    db::archive,
-};
+use crate::config::{CONFIG, CONN};
 
-use super::wayback_client::{CdxLine, CdxMatchType, CdxOptions, WaybackClient};
+use super::{
+    timestamp::Timestamp,
+    wayback_client::{CdxLine, CdxMatchType, CdxOptions, WaybackClient},
+};
+use entity::archive::{ActiveModel as DbArchiveActiveModel, Entity as DbArchive};
 use eyre::OptionExt;
+use sea_orm::{EntityTrait, Set};
 
 /// Get the latest index of pages from the web archive
 pub async fn get_latest_pages_index(
     client: &WaybackClient,
     url: String,
-    from: Option<String>,
-    to: Option<String>,
+    from: Option<Timestamp>,
+    to: Option<Timestamp>,
 ) -> eyre::Result<HashMap<String, CdxLine>> {
     let index = client
         .get_cdx(CdxOptions {
@@ -103,17 +105,15 @@ pub async fn download_page(
         .join(file_path);
     let save_path = Path::new(&CONFIG.download_dir()).join(&save_path_rel);
 
-    if CONN
-        .archive()
-        .find_unique(archive::url_scheme_url_host_url_path_timestamp(
-            url_scheme.to_string(),
-            url_host.to_string(),
-            url_path.to_string(),
-            record.timestamp.0.into(),
-        ))
-        .exec()
-        .await?
-        .is_some()
+    if DbArchive::find_by_id((
+        url_scheme.to_string(),
+        url_host.to_string(),
+        url_path.to_string(),
+        record.timestamp.unix_time(),
+    ))
+    .one(&*CONN)
+    .await?
+    .is_some()
     {
         return Ok(DownloadStatus::Skipped("File already exists".to_string()));
     }
@@ -123,21 +123,17 @@ pub async fn download_page(
     tokio::fs::create_dir_all(&save_dir).await?;
     tokio::fs::write(&save_path, resp.bytes().await?).await?;
 
-    let status_code = record.status_code.map(|v| v.as_u16());
-    let save_path_rel = save_path_rel.to_string_lossy();
-
-    CONN.archive()
-        .create(
-            url_scheme.to_string(),
-            url_host.to_string(),
-            url_path.to_string(),
-            record.timestamp.0.into(),
-            record.mime.clone(),
-            save_path_rel.to_string(),
-            vec![archive::status::set(status_code.map(|v| v as i32))],
-        )
-        .exec()
-        .await?;
+    DbArchive::insert(DbArchiveActiveModel {
+        url_scheme: Set(url_scheme.to_string()),
+        url_host: Set(url_host.to_string()),
+        url_path: Set(url_path.to_string()),
+        timestamp: Set(record.timestamp.unix_time()),
+        mime: Set(record.mime.clone()),
+        status: Set(record.status_code.map(|v| v.as_u16() as i32)),
+        save_path: Set(save_path_rel.to_string_lossy().to_string()),
+    })
+    .exec(&*CONN)
+    .await?;
 
     Ok::<DownloadStatus, eyre::Report>(DownloadStatus::Done)
 }

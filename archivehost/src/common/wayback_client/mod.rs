@@ -47,8 +47,8 @@ pub struct CdxRawOptions {
 pub struct CdxOptions {
     pub url: String,
     pub limit: Option<u32>,
-    pub from: Option<String>,
-    pub to: Option<String>,
+    pub from: Option<Timestamp>,
+    pub to: Option<Timestamp>,
     pub collapse: Option<String>,
     pub match_type: Option<CdxMatchType>,
     pub filter: Option<String>,
@@ -106,8 +106,8 @@ impl WaybackClient {
         let opts = CdxRawOptions {
             url: opts.url,
             limit: opts.limit,
-            from: opts.from,
-            to: opts.to,
+            from: opts.from.map(|t| t.to_wb_ts()),
+            to: opts.to.map(|t| t.to_wb_ts()),
             collapse: opts.collapse,
             match_type: opts.match_type,
             filter: opts.filter,
@@ -198,8 +198,8 @@ mod test {
         let opts = CdxOptions {
             url: "example.com".to_string(),
             limit: Some(10),
-            from: Some("20210101".to_string()),
-            to: Some("20211231".to_string()),
+            from: Some(Timestamp::from_wb_ts("20210101").unwrap()),
+            to: Some(Timestamp::from_wb_ts("20210101").unwrap()),
             collapse: Some("urlkey".to_string()),
             match_type: Some(CdxMatchType::Exact),
             resume_key: None,

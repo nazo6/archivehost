@@ -20,7 +20,11 @@ pub async fn serve_site_latest(
         // return Err((StatusCode::NOT_FOUND, "Not found".to_string()));
     };
 
-    tracing::debug!("Serving file: {:?} ({:?})", latest_path, latest_timestamp);
+    tracing::debug!(
+        "Serving file at {:?} (request: latest):\n\t{:?} ",
+        latest_timestamp,
+        latest_path
+    );
 
     Ok(serve_file(&latest_path, &url, "latest")
         .await

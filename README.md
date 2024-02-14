@@ -18,7 +18,6 @@ Currently, binary is not available. You can install by running:
 $ git clone https://github.com/nazo6/archivehost
 $ cd archivehost
 $ pnpm i
-$ pnpm prisma-generate
 $ pnpm inst
 ```
 

@@ -7,8 +7,7 @@ pub use interface::*;
 
 use clap::Parser as _;
 use once_cell::sync::Lazy;
-
-use crate::db::PrismaClient;
+use sea_orm::{Database, DatabaseConnection};
 
 pub struct ConfigOverride {
     pub root: Option<PathBuf>,
@@ -38,11 +37,6 @@ fn get_config(or: ConfigOverride) -> eyre::Result<Config> {
     merge!(config.serve.port, or.serve_port);
     merge_optional!(config.serve.host, or.serve_host);
 
-    if config.root.exists() && !config.root.is_dir() {
-        panic!("Data dir is not a directory");
-    }
-    std::fs::create_dir_all(&*config.root).expect("Failed to create data dir");
-
     Ok(config)
 }
 
@@ -68,17 +62,25 @@ pub static CONFIG: Lazy<Config> = Lazy::new(|| {
         _ => {}
     }
 
-    get_config(config_override).unwrap()
+    let config = get_config(config_override).expect("Failed to load config");
+
+    if config.root.exists() && !config.root.is_dir() {
+        panic!("Data dir is not a directory");
+    }
+    std::fs::create_dir_all(&*config.root).expect("Failed to create data dir");
+
+    config
 });
 
-pub static CONN: Lazy<PrismaClient> = Lazy::new(|| {
+pub static CONN: Lazy<DatabaseConnection> = Lazy::new(|| {
     futures::executor::block_on(async {
-        let url = format!("file://{}/db", CONFIG.root.to_string_lossy());
-        PrismaClient::_builder()
-            .with_url(url)
-            .build()
+        let url = format!(
+            "sqlite://{}/db.sqlite?mode=rwc",
+            CONFIG.root.to_string_lossy()
+        );
+        Database::connect(url)
             .await
-            .expect("Failed to connect")
+            .expect("Failed to connect to database")
     })
 });
 

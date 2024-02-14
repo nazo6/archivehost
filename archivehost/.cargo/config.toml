@@ -1,5 +1,2 @@
-[alias]
-prisma = "run -p prisma-cli --"
-
 [target.'cfg(all(target_os = "linux", debug_assertions))']
 rustflags = ["-C", "link-arg=-fuse-ld=mold"]

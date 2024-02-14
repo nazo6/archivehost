@@ -8,6 +8,7 @@ use tokio::signal;
 use crate::{
     common::{
         download::{download_page, get_latest_pages_index, DownloadStatus},
+        timestamp::Timestamp,
         wayback_client::WaybackClient,
     },
     config::{cli::DownloadArgs, CONFIG},
@@ -17,8 +18,26 @@ use crate::{
 pub async fn download(args: DownloadArgs) -> eyre::Result<()> {
     let client = WaybackClient::default();
 
-    println!("Fetching index...");
-    let index = get_latest_pages_index(&client, args.url, args.from, args.to).await?;
+    let from = if let Some(from) = args.from {
+        Some(Timestamp::from_str(&from)?)
+    } else {
+        None
+    };
+    let to = if let Some(to) = args.to {
+        Some(Timestamp::from_str(&to)?)
+    } else {
+        None
+    };
+
+    print!("Fetching index");
+    if let Some(from) = &from {
+        print!(" from {}", from);
+    }
+    if let Some(to) = &to {
+        print!(" to {}", to);
+    }
+    println!("...");
+    let index = get_latest_pages_index(&client, args.url, from, to).await?;
     println!("{} entries found.", index.len());
 
     let pb = ProgressBar::new(index.len() as u64);

@@ -2,59 +2,13 @@
 
 
 
-type IntConnection {
-	"""
-	Information to aid in pagination.
-	"""
-	pageInfo: PageInfo!
-	"""
-	A list of edges.
-	"""
-	edges: [IntEdge!]!
-	"""
-	A list of nodes.
-	"""
-	nodes: [Int!]!
-}
-
-"""
-An edge in a connection.
-"""
-type IntEdge {
-	"""
-	The item at the end of the edge
-	"""
-	node: Int!
-	"""
-	A cursor for use in pagination
-	"""
-	cursor: String!
-}
-
-"""
-Information about pagination in a connection
-"""
-type PageInfo {
-	"""
-	When paginating backwards, are there more items?
-	"""
-	hasPreviousPage: Boolean!
-	"""
-	When paginating forwards, are there more items?
-	"""
-	hasNextPage: Boolean!
-	"""
-	When paginating backwards, the cursor to continue.
-	"""
-	startCursor: String
-	"""
-	When paginating forwards, the cursor to continue.
-	"""
-	endCursor: String
-}
-
 type QueryRoot {
-	siteList(after: String, before: String, first: Int, last: Int): IntConnection!
+	siteList(offset: Int, limit: Int): SiteListResult!
+}
+
+type SiteListResult {
+	totalCount: Int!
+	hosts: [String!]!
 }
 
 
