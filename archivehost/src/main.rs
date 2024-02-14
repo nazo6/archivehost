@@ -1,5 +1,5 @@
 use config::CLI;
-use migration::{Migrator, MigratorTrait as _};
+use migration::{Migrator, MigratorTrait};
 use tracing::{info, warn};
 
 use crate::config::CONN;
@@ -22,8 +22,11 @@ async fn main() -> eyre::Result<()> {
     if CLI.skip_migration {
         warn!("ATTENTION: Skipping migration. This is for development. Using this in production may cause data loss.");
     } else {
-        info!("Database migration running");
-        Migrator::up(&*CONN, None).await?;
+        let pending = Migrator::get_pending_migrations(&*CONN).await?;
+        if !pending.is_empty() {
+            info!("Running pending migrations");
+            Migrator::up(&*CONN, None).await?;
+        }
     }
 
     cli::start().await?;
