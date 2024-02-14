@@ -15,7 +15,11 @@ pub async fn serve_dummy_file(web_url: &Url) -> Result<impl IntoResponse, (Statu
         let headers = [(header::CONTENT_TYPE, mime::IMAGE_PNG.to_string())];
         return Ok((
             headers,
-            include_bytes!("../../../../asset/dummy/dummy.png").into_response(),
+            include_bytes!(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/asset/dummy/dummy.png"
+            ))
+            .into_response(),
         ));
     }
 

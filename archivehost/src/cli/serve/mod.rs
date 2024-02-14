@@ -7,10 +7,13 @@ use crate::config::{cli::ServeArgs, CONFIG};
 
 #[cfg(not(debug_assertions))]
 mod frontend;
+mod graphql;
 mod web;
 
 pub async fn serve(_args: ServeArgs) -> eyre::Result<()> {
-    let router = Router::new().nest("/web", web::route());
+    let router = Router::new()
+        .nest("/web", web::route())
+        .merge(graphql::router());
 
     #[cfg(not(debug_assertions))]
     let router = router.fallback(frontend::static_handler);
