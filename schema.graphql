@@ -1,9 +1,18 @@
 
+type DownloadStats {
+	pending: Int!
+	downloading: Int!
+	success: Int!
+	failed: Int!
+	skipped: Int!
+}
+
 
 
 
 type MutationRoot {
 	downloadSite(urlPart: String!, from: String, to: String): Boolean!
+	clearDownloadQueue: Boolean!
 }
 
 type QueryRoot {
@@ -18,7 +27,7 @@ type SiteList {
 
 
 type Subscription {
-	integers: Int!
+	downloadStats: DownloadStats!
 }
 
 directive @include(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT

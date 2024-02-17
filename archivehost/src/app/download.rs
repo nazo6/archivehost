@@ -8,7 +8,7 @@ use tokio::signal;
 use crate::{
     cli::DownloadArgs,
     common::{
-        download::{cdx::get_latest_pages_index, download_and_save_page, DownloadStatus},
+        download::{cdx::get_latest_pages_index, download_and_save_page, DownloadResult},
         timestamp::Timestamp,
         wayback_client::WaybackClient,
     },
@@ -97,7 +97,7 @@ pub async fn download(args: DownloadArgs) -> eyre::Result<()> {
                 .await;
 
                 match res {
-                    Ok(DownloadStatus::Done) => {
+                    Ok(DownloadResult::Done) => {
                         pb.println(format!(
                             "{}    {} [{}]",
                             " Done ".on_green(),
@@ -106,7 +106,7 @@ pub async fn download(args: DownloadArgs) -> eyre::Result<()> {
                         ));
                         *count.done.lock().unwrap() += 1;
                     }
-                    Ok(DownloadStatus::Skipped(message)) => {
+                    Ok(DownloadResult::Skipped(message)) => {
                         pb.println(format!(
                             "{} {} [{}]",
                             " Skipped ".on_blue(),
@@ -115,7 +115,7 @@ pub async fn download(args: DownloadArgs) -> eyre::Result<()> {
                         ));
                         *count.skipped.lock().unwrap() += 1;
                     }
-                    Ok(DownloadStatus::FixDb(message)) => {
+                    Ok(DownloadResult::FixDb(message)) => {
                         pb.println(format!(
                             "{} {} [{}]",
                             " Skipped ".on_cyan(),

@@ -9,7 +9,7 @@ use super::{timestamp::Timestamp, wayback_client::WaybackClient};
 
 pub mod cdx;
 
-pub enum DownloadStatus {
+pub enum DownloadResult {
     Done,
     Skipped(String),
     FixDb(String),
@@ -22,14 +22,14 @@ pub async fn download_and_save_page(
     mime: &str,
     timestamp: &Timestamp,
     status_code: Option<http::StatusCode>,
-) -> Result<DownloadStatus, eyre::Report> {
+) -> Result<DownloadResult, eyre::Report> {
     if CONFIG
         .download
         .ignored_mime_types
         .iter()
         .any(|v| mime.starts_with(v))
     {
-        return Ok(DownloadStatus::Skipped(format!("Ignored mime: {}", mime)));
+        return Ok(DownloadResult::Skipped(format!("Ignored mime: {}", mime)));
     }
 
     let url = url::Url::parse(url_str)?;
@@ -68,7 +68,7 @@ pub async fn download_and_save_page(
     .await?
     .is_some()
     {
-        return Ok(DownloadStatus::Skipped("Already exists in db".to_string()));
+        return Ok(DownloadResult::Skipped("Already exists in db".to_string()));
     }
 
     if tokio::fs::try_exists(&save_path).await? {
@@ -83,7 +83,7 @@ pub async fn download_and_save_page(
         })
         .exec(&*CONN)
         .await?;
-        return Ok(DownloadStatus::FixDb(
+        return Ok(DownloadResult::FixDb(
             "File already exists. Data is inserted to db.".to_string(),
         ));
     }
@@ -105,5 +105,5 @@ pub async fn download_and_save_page(
     .exec(&*CONN)
     .await?;
 
-    Ok::<DownloadStatus, eyre::Report>(DownloadStatus::Done)
+    Ok::<DownloadResult, eyre::Report>(DownloadResult::Done)
 }

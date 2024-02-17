@@ -7,7 +7,7 @@ pub struct Model {
     pub id: Uuid,
     pub url: String,
     pub group_id: Uuid,
-    pub download_status: Status,
+    pub download_status: DownloadStatus,
     pub message: Option<String>,
     // cdx data
     pub timestamp: i64,
@@ -35,7 +35,7 @@ impl ActiveModelBehavior for ActiveModel {}
 
 #[derive(EnumIter, DeriveActiveEnum, PartialEq, Eq, Debug, Clone)]
 #[sea_orm(rs_type = "i32", db_type = "Integer")]
-pub enum Status {
+pub enum DownloadStatus {
     #[sea_orm(num_value = 0)]
     Pending,
     #[sea_orm(num_value = 1)]

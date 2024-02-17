@@ -13,15 +13,13 @@ mod graphql;
 mod web;
 
 struct StateInner {
-    download_task_controller: download_queue::DownloadQueueController,
+    dl_q: download_queue::DownloadQueueController,
 }
 type State = Arc<StateInner>;
 
 pub async fn serve(_args: ServeArgs) -> eyre::Result<()> {
     let state = StateInner {
-        download_task_controller: download_queue::DownloadQueueController::start(
-            CONFIG.download.concurrency,
-        ),
+        dl_q: download_queue::DownloadQueueController::start(CONFIG.download.concurrency),
     };
     let state = Arc::new(state);
 
