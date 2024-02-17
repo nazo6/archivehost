@@ -4,8 +4,9 @@
   "main": "index.js",
   "scripts": {
     "kill": "pkill archivehost",
-    "sea-migrate": "cd archivehost && sea migrate -d ./db/migration",
-    "sea-entity": "cd archivehost && sea generate entity -o ./db/entity/src -l",
+    "migrate": "cd archivehost && sea migrate -d ./db",
+    "db-update": "npm run sea-migrate && npm run sea-entity",
+    "db-reset": "npm run sea-migrate fresh && npm run sea-entity",
     "dev": "concurrently -c 'blue,green' npm:dev:*",
     "dev:front": "cd frontend && pnpm dev",
     "dev:back": "cd archivehost && cargo watch -x 'run -- serve'",

@@ -1,4 +1,4 @@
-use async_graphql::{http::GraphiQLSource, EmptyMutation, EmptySubscription, Schema};
+use async_graphql::{http::GraphiQLSource, Schema};
 use async_graphql_axum::{GraphQL, GraphQLSubscription};
 use axum::{
     response::{Html, IntoResponse},
@@ -6,13 +6,23 @@ use axum::{
     Router,
 };
 
-mod query;
+use super::State;
 
-pub fn router() -> Router {
-    let schema = Schema::build(query::QueryRoot, EmptyMutation, EmptySubscription).finish();
+mod mutation;
+mod query;
+mod subscription;
+
+pub fn router(state: State) -> Router<State> {
+    let schema = Schema::build(
+        query::QueryRoot::default(),
+        mutation::MutationRoot,
+        subscription::Subscription,
+    )
+    .data(state)
+    .finish();
 
     #[cfg(debug_assertions)]
-    std::fs::write("../schema.graphql", schema.sdl()).unwrap();
+    std::fs::write("../schema.graphql", schema.sdl()).expect("Unable to write schema");
 
     Router::new()
         .route(

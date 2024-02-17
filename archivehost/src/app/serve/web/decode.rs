@@ -6,8 +6,8 @@ pub fn decode_bytes(bytes: &[u8]) -> String {
     let encoding = detector.guess(None, true);
     let mut decoder = encoding.new_decoder();
     let mut buffer_bytes = [0u8; 8];
-    let mut buffer: &mut str = std::str::from_utf8_mut(&mut buffer_bytes[..]).unwrap();
-    let mut total_had_errors = false;
+    let buffer: &mut str = std::str::from_utf8_mut(&mut buffer_bytes[..]).unwrap();
+    let mut _total_had_errors = false;
     let mut bytes_in_buffer = 0usize;
     let mut output = String::new();
 
@@ -21,7 +21,7 @@ pub fn decode_bytes(bytes: &[u8]) -> String {
         );
         total_read_from_current_input += read;
         bytes_in_buffer += written;
-        total_had_errors |= had_errors;
+        _total_had_errors |= had_errors;
         match result {
             CoderResult::InputEmpty => {
                 // We have consumed the current input buffer. Break out of

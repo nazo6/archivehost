@@ -1,4 +1,7 @@
-use crate::config::{cli::Commands, CLI};
+use crate::{
+    cli::{Commands, CLI},
+    config::CONFIG_PATH,
+};
 
 mod download;
 mod fixdb;
@@ -13,11 +16,8 @@ pub async fn start() -> eyre::Result<()> {
             serve::serve(args).await?;
         }
         Commands::Config => {
-            println!(
-                "Config location: {:?}",
-                confy::get_configuration_file_path(crate::config::PKG_NAME, None)?
-            );
-            println!("Current config: {:#?}", &*crate::config::CONFIG);
+            println!("Config location: {:?}", &*CONFIG_PATH);
+            println!("Config content: {:#?}", &*crate::config::CONFIG);
         }
         Commands::FixDb => {
             fixdb::fixdb().await?;

@@ -6,12 +6,13 @@ use indicatif::{ProgressBar, ProgressStyle};
 use tokio::signal;
 
 use crate::{
+    cli::DownloadArgs,
     common::{
         download::{download_page, get_latest_pages_index, DownloadStatus},
         timestamp::Timestamp,
         wayback_client::WaybackClient,
     },
-    config::{cli::DownloadArgs, CONFIG},
+    config::CONFIG,
 };
 
 #[tracing::instrument(skip(args), err)]
@@ -98,11 +99,20 @@ pub async fn download(args: DownloadArgs) -> eyre::Result<()> {
                         ));
                         *count.done.lock().unwrap() += 1;
                     }
-                    Ok(DownloadStatus::Skipped(reason)) => {
+                    Ok(DownloadStatus::Skipped(message)) => {
                         pb.println(format!(
                             "{} {} [{}]",
                             " Skipped ".on_blue(),
-                            reason,
+                            message,
+                            record.original
+                        ));
+                        *count.skipped.lock().unwrap() += 1;
+                    }
+                    Ok(DownloadStatus::FixDb(message)) => {
+                        pb.println(format!(
+                            "{} {} [{}]",
+                            " Skipped ".on_cyan(),
+                            message,
                             record.original
                         ));
                         *count.skipped.lock().unwrap() += 1;

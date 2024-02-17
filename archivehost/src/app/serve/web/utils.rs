@@ -1,13 +1,10 @@
 use std::path::PathBuf;
 
-use entity::archive;
+use db::entity::archive;
 use sea_orm::{ColumnTrait, EntityTrait as _, QueryFilter as _, QueryOrder as _};
 use url::Url;
 
-use crate::{
-    common::timestamp::Timestamp,
-    config::{CONFIG, CONN},
-};
+use crate::{common::timestamp::Timestamp, config::CONFIG, constant::CONN};
 
 async fn find(
     until: Option<&Timestamp>,

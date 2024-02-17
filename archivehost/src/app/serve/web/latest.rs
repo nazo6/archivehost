@@ -1,7 +1,7 @@
 use axum::{extract::Path, response::IntoResponse};
 use http::StatusCode;
 
-use crate::cli::serve::web::{dummy_file::serve_dummy_file, utils::parse_url};
+use super::{dummy_file::serve_dummy_file, utils::parse_url};
 
 use super::{serve_file::serve_file, utils::find_latest_page};
 

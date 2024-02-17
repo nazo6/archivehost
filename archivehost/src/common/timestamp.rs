@@ -4,7 +4,7 @@ use std::fmt::{Display, Formatter};
 use chrono::{prelude::*, DateTime};
 use eyre::OptionExt;
 
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct Timestamp(pub DateTime<Utc>);
 impl Timestamp {
     /// Convert 14-digit wayback machine timestamp to a `Timestamp`
@@ -45,11 +45,11 @@ impl Timestamp {
         }
     }
 
-    pub fn unix_time(&self) -> i32 {
-        self.0.timestamp() as i32
+    pub fn unix_time(&self) -> i64 {
+        self.0.timestamp()
     }
-    pub fn from_unix_time(ts: i32) -> Result<Self, eyre::Error> {
-        match Utc.timestamp_opt(ts.into(), 0) {
+    pub fn from_unix_time(ts: i64) -> Result<Self, eyre::Error> {
+        match Utc.timestamp_opt(ts, 0) {
             chrono::LocalResult::Single(dt) => Ok(Timestamp(dt)),
             _ => Err(eyre::eyre!("Invalid timestamp")),
         }

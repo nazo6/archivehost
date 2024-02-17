@@ -1,17 +1,28 @@
 use std::path::PathBuf;
 
 use derivative::Derivative;
+use normalize_path::NormalizePath;
 use serde::{Deserialize, Serialize};
 
-use super::PKG_NAME;
+fn default_root() -> PathBuf {
+    #[cfg(not(debug_assertions))]
+    let dir = dirs::data_dir()
+        .expect("Failed to get data dir")
+        .join(super::PKG_NAME);
+
+    #[cfg(debug_assertions)]
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../")
+        .join("data");
+
+    dir.normalize()
+}
 
 #[derive(Derivative)]
 #[derivative(Default)]
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Config {
-    #[derivative(Default(
-        value = r#"dirs::data_dir().expect("Failed to get data dir").join(PKG_NAME)"#
-    ))]
+    #[derivative(Default(value = "default_root()"))]
     pub root: PathBuf,
     pub download: DownloadConfig,
     pub serve: ServeConfig,

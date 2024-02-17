@@ -1,16 +1,17 @@
 [package]
-name = "migration"
+name = "db"
 version = "0.1.0"
 edition = "2021"
-publish = false
 
 [lib]
-name = "migration"
+name = "db"
 path = "src/lib.rs"
 
 [dependencies]
-tokio = { version = "1.36.0", features = ["full"] }
 sea-orm-migration = { version = "0.12.14", features = [
   "runtime-tokio-rustls",
   "sqlx-sqlite",
 ] }
+sea-orm = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+uuid = { workspace = true }

@@ -4,10 +4,8 @@ use axum::{
 };
 use http::StatusCode;
 
-use crate::{
-    cli::serve::web::{dummy_file::serve_dummy_file, utils::parse_url},
-    common::timestamp::Timestamp,
-};
+use super::{dummy_file::serve_dummy_file, utils::parse_url};
+use crate::common::timestamp::Timestamp;
 
 use super::{serve_file::serve_file, utils::find_latest_page};
 

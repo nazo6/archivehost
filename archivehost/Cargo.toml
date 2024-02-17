@@ -7,7 +7,6 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.5.0", features = ["derive"] }
-tokio = { version = "1.36.0", features = ["full"] }
 indicatif = "0.17.8"
 url = "2.5.0"
 urlencoding = "2.1.3"
@@ -34,14 +33,21 @@ chrono = "0.4.34"
 rust-embed = "8.2.0"
 async-graphql = "7.0.1"
 async-graphql-axum = "7.0.1"
+sea-orm = { workspace = true }
+tokio = { workspace = true, features = ["macros", "signal", "rt-multi-thread"] }
+db = { path = "db" }
+chardetng = "0.1.17"
+encoding_rs = "0.8.33"
+uuid = { workspace = true }
+normalize-path = "0.2.1"
+
+[workspace]
+members = ["db"]
+
+[workspace.dependencies]
+tokio = { version = "1.36.0" }
 sea-orm = { version = "0.12.14", features = [
   "runtime-tokio-rustls",
   "sqlx-sqlite",
 ] }
-entity = { path = "db/entity" }
-migration = { path = "db/migration" }
-chardetng = "0.1.17"
-encoding_rs = "0.8.33"
-
-[workspace]
-members = ["db/migration", "db/entity"]
+uuid = { version = "1.7.0", features = ["v7"] }

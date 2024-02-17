@@ -1,13 +1,13 @@
 use std::path::PathBuf;
 
-pub mod cli;
 mod interface;
 
 pub use interface::*;
 
-use clap::Parser as _;
+use normalize_path::NormalizePath;
 use once_cell::sync::Lazy;
-use sea_orm::{Database, DatabaseConnection};
+
+use crate::cli;
 
 pub struct ConfigOverride {
     pub root: Option<PathBuf>,
@@ -29,8 +29,8 @@ macro_rules! merge_optional {
     };
 }
 
-fn get_config(or: ConfigOverride) -> eyre::Result<Config> {
-    let mut config = confy::load::<Config>(PKG_NAME, None)?;
+fn get_config(config_path: &PathBuf, or: ConfigOverride) -> eyre::Result<Config> {
+    let mut config = confy::load_path::<Config>(config_path)?;
 
     merge!(config.root, or.root);
     merge!(config.download.concurrency, or.download_concurrency);
@@ -40,10 +40,24 @@ fn get_config(or: ConfigOverride) -> eyre::Result<Config> {
     Ok(config)
 }
 
-pub static CLI: Lazy<cli::Cli> = Lazy::new(cli::Cli::parse);
+pub static CONFIG_PATH: Lazy<PathBuf> = Lazy::new(|| {
+    cli::CLI.config_path.clone().unwrap_or_else(|| {
+        #[cfg(debug_assertions)]
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../")
+            .join("data");
+        #[cfg(not(debug_assertions))]
+        let dir = dirs::config_dir()
+            .expect("Failed to get config dir")
+            .join(PKG_NAME);
+
+        dir.normalize().join("config.toml")
+    })
+});
 
 pub static CONFIG: Lazy<Config> = Lazy::new(|| {
-    let cli = CLI.clone();
+    let cli = cli::CLI.clone();
+
     let mut config_override = ConfigOverride {
         root: cli.root_dir,
         download_concurrency: None,
@@ -62,7 +76,7 @@ pub static CONFIG: Lazy<Config> = Lazy::new(|| {
         _ => {}
     }
 
-    let config = get_config(config_override).expect("Failed to load config");
+    let config = get_config(&CONFIG_PATH, config_override).expect("Failed to load config");
 
     if config.root.exists() && !config.root.is_dir() {
         panic!("Data dir is not a directory");
@@ -71,17 +85,3 @@ pub static CONFIG: Lazy<Config> = Lazy::new(|| {
 
     config
 });
-
-pub static CONN: Lazy<DatabaseConnection> = Lazy::new(|| {
-    futures::executor::block_on(async {
-        let url = format!(
-            "sqlite://{}/db.sqlite?mode=rwc",
-            CONFIG.root.to_string_lossy()
-        );
-        Database::connect(url)
-            .await
-            .expect("Failed to connect to database")
-    })
-});
-
-pub static PKG_NAME: &str = std::env!("CARGO_PKG_NAME");

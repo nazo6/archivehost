@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use clap::{Args, Parser, Subcommand};
+use once_cell::sync::Lazy;
 
 #[derive(Parser, Clone)]
 #[command(version, about, long_about = None)]
@@ -8,6 +9,9 @@ use clap::{Args, Parser, Subcommand};
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
+
+    #[arg(long)]
+    pub config_path: Option<PathBuf>,
 
     /// Directory to save the downloaded files.
     /// Default is [`dirs::data_dir()`] + "/archivehost"
@@ -73,3 +77,5 @@ pub struct ServeArgs {
     #[arg(long)]
     pub host: Option<String>,
 }
+
+pub static CLI: Lazy<Cli> = Lazy::new(Cli::parse);

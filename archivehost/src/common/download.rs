@@ -1,12 +1,13 @@
 use std::{collections::HashMap, path::Path};
 
-use crate::config::{CONFIG, CONN};
+use crate::config::CONFIG;
+use crate::constant::CONN;
 
 use super::{
     timestamp::Timestamp,
     wayback_client::{CdxLine, CdxMatchType, CdxOptions, WaybackClient},
 };
-use entity::archive::{ActiveModel as DbArchiveActiveModel, Entity as DbArchive};
+use db::entity::archive::{ActiveModel as DbArchiveActiveModel, Entity as DbArchive};
 use eyre::OptionExt;
 use sea_orm::{EntityTrait, Set};
 
@@ -61,6 +62,8 @@ pub async fn get_latest_pages_index(
 pub enum DownloadStatus {
     Done,
     Skipped(String),
+    /// Download skipped but added item to db
+    FixDb(String),
 }
 /// Download and save page to DOWNLOAD_DIR
 pub async fn download_page(
@@ -115,7 +118,24 @@ pub async fn download_page(
     .await?
     .is_some()
     {
-        return Ok(DownloadStatus::Skipped("File already exists".to_string()));
+        return Ok(DownloadStatus::Skipped("Already exists in db".to_string()));
+    }
+
+    if tokio::fs::try_exists(&save_path).await? {
+        DbArchive::insert(DbArchiveActiveModel {
+            url_scheme: Set(url_scheme.to_string()),
+            url_host: Set(url_host.to_string()),
+            url_path: Set(url_path.to_string()),
+            timestamp: Set(record.timestamp.unix_time()),
+            mime: Set(record.mime.clone()),
+            status: Set(record.status_code.map(|v| v.as_u16() as i32)),
+            save_path: Set(save_path_rel.to_string_lossy().to_string()),
+        })
+        .exec(&*CONN)
+        .await?;
+        return Ok(DownloadStatus::FixDb(
+            "File already exists. Data is inserted to db.".to_string(),
+        ));
     }
 
     let resp = client.get_page(&timestamp_str, &record.original).await?;

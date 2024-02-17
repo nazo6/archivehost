@@ -1,6 +1,7 @@
-use crate::config::{CONFIG, CONN};
+use crate::config::CONFIG;
+use crate::constant::CONN;
 
-use entity::archive::Entity as DbArchive;
+use db::entity::archive::Entity as DbArchive;
 use sea_orm::EntityTrait;
 
 pub async fn fixdb() -> eyre::Result<()> {
