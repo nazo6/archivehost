@@ -9,7 +9,7 @@
     "db-reset": "npm run sea-migrate fresh && npm run sea-entity",
     "dev": "concurrently -c 'blue,green' npm:dev:*",
     "dev:front": "cd frontend && pnpm dev",
-    "dev:back": "cd archivehost && cargo watch -x 'run -- serve'",
+    "dev:back": "RUST_BACKTRACE=1 cd archivehost && cargo watch -x 'run -- serve'",
     "crun": "cd archivehost && cargo run --",
     "build": "npm run build:front && npm run build:back",
     "build:front": "cd frontend && pnpm build",

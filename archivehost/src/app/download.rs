@@ -8,7 +8,7 @@ use tokio::signal;
 use crate::{
     cli::DownloadArgs,
     common::{
-        download::{download_page, get_latest_pages_index, DownloadStatus},
+        download::{cdx::get_latest_pages_index, download_and_save_page, DownloadStatus},
         timestamp::Timestamp,
         wayback_client::WaybackClient,
     },
@@ -87,7 +87,14 @@ pub async fn download(args: DownloadArgs) -> eyre::Result<()> {
                     return;
                 }
 
-                let res = download_page(client.as_ref(), record).await;
+                let res = download_and_save_page(
+                    client.as_ref(),
+                    &record.original,
+                    &record.mime,
+                    &record.timestamp,
+                    record.status_code,
+                )
+                .await;
 
                 match res {
                     Ok(DownloadStatus::Done) => {

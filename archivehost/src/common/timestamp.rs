@@ -4,7 +4,7 @@ use std::fmt::{Display, Formatter};
 use chrono::{prelude::*, DateTime};
 use eyre::OptionExt;
 
-#[derive(Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Debug, PartialEq, PartialOrd, Clone, Eq, Ord)]
 pub struct Timestamp(pub DateTime<Utc>);
 impl Timestamp {
     /// Convert 14-digit wayback machine timestamp to a `Timestamp`

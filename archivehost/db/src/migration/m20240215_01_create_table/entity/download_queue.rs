@@ -7,7 +7,12 @@ pub struct Model {
     pub id: Uuid,
     pub url: String,
     pub group_id: Uuid,
-    pub status: Status,
+    pub download_status: Status,
+    pub message: Option<String>,
+    // cdx data
+    pub timestamp: i64,
+    pub mime: String,
+    pub status_code: Option<i32>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -15,9 +20,7 @@ pub enum Relation {
     #[sea_orm(
         belongs_to = "super::download_queue_group::Entity",
         from = "Column::GroupId",
-        to = "super::download_queue_group::Column::Id",
-        on_update = "NoAction",
-        on_delete = "NoAction"
+        to = "super::download_queue_group::Column::Id"
     )]
     DownloadQueueGroup,
 }

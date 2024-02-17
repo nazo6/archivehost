@@ -3,7 +3,7 @@
 
 
 type MutationRoot {
-	downloadSite(urlPart: String!): Boolean!
+	downloadSite(urlPart: String!, from: String, to: String): Boolean!
 }
 
 type QueryRoot {

@@ -5,6 +5,7 @@ use reqwest::Response;
 use serde::Serialize;
 
 mod error;
+
 use error::Result;
 
 use super::timestamp::Timestamp;

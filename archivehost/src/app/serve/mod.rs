@@ -6,20 +6,22 @@ use tracing::info;
 
 use crate::{cli::ServeArgs, config::CONFIG};
 
-// mod download_queue;
+mod download_queue;
 #[cfg(not(debug_assertions))]
 mod frontend;
 mod graphql;
 mod web;
 
 struct StateInner {
-    // download_task_controller: download_queue::DownloadQueueController,
+    download_task_controller: download_queue::DownloadQueueController,
 }
 type State = Arc<StateInner>;
 
 pub async fn serve(_args: ServeArgs) -> eyre::Result<()> {
     let state = StateInner {
-        // download_task_controller: download_queue::DownloadQueueController::start(4),
+        download_task_controller: download_queue::DownloadQueueController::start(
+            CONFIG.download.concurrency,
+        ),
     };
     let state = Arc::new(state);
 
