@@ -49,7 +49,7 @@ pub static CONFIG_PATH: Lazy<PathBuf> = Lazy::new(|| {
         #[cfg(not(debug_assertions))]
         let dir = dirs::config_dir()
             .expect("Failed to get config dir")
-            .join(PKG_NAME);
+            .join(crate::constant::PKG_NAME);
 
         dir.normalize().join("config.toml")
     })

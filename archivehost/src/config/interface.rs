@@ -8,7 +8,7 @@ fn default_root() -> PathBuf {
     #[cfg(not(debug_assertions))]
     let dir = dirs::data_dir()
         .expect("Failed to get data dir")
-        .join(super::PKG_NAME);
+        .join(crate::constant::PKG_NAME);
 
     #[cfg(debug_assertions)]
     let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))

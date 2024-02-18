@@ -3,7 +3,6 @@ use std::path::PathBuf;
 use db::entity::archive;
 use sea_orm::{
     ColumnTrait, DatabaseConnection, EntityTrait as _, QueryFilter as _, QueryOrder as _,
-    QueryTrait as _,
 };
 use url::Url;
 
