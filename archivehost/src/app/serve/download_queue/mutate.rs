@@ -144,7 +144,7 @@ impl DownloadQueueController {
             })
             .await?;
 
-        self.new_task_notifier.notify_waiters();
+        self.state_changed_notifier.notify_waiters();
 
         Ok(())
     }

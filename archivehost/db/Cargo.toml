@@ -15,4 +15,3 @@ sea-orm-migration = { version = "0.12.14", features = [
 sea-orm = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 uuid = { workspace = true }
-async-graphql = { version = "7.0.1" }

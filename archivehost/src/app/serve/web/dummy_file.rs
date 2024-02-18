@@ -25,7 +25,7 @@ pub async fn serve_dummy_file(web_url: &Url) -> Result<impl IntoResponse, (Statu
     } else {
         return Err((
             StatusCode::NOT_FOUND,
-            "Not found (dummy: dummy file for this meme is not found)".to_string(),
+            "Not found (dummy: dummy file for this mime is not found)".to_string(),
         ));
     };
 

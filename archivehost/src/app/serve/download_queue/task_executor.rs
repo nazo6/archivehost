@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use sea_orm::sea_query::Expr;
 use sea_orm::Set;
 use sea_orm::{ColumnTrait as _, EntityTrait, QueryFilter as _};
 use tokio::sync::Notify;
@@ -50,8 +51,23 @@ pub(super) async fn start_task_executor(
     client: Arc<WaybackClient>,
 ) {
     let conn = conn.clone();
+
+    info!("Starting download queue task executor");
+
+    // NOTE: Assuming there are no other instances running, we can safely reset the download status to pending.
+    if let Err(e) = q::Entity::update_many()
+        .col_expr(
+            q::Column::DownloadStatus,
+            Expr::value(DownloadStatus::Pending),
+        )
+        .filter(q::Column::DownloadStatus.eq(DownloadStatus::Downloading))
+        .exec(&conn)
+        .await
+    {
+        warn!("Failed to reset download status to pending: {:?}", e);
+    }
+
     loop {
-        new_task_notifier.notified().await;
         loop {
             match q::Entity::find()
                 .filter(q::Column::DownloadStatus.eq(DownloadStatus::Pending))
@@ -125,5 +141,6 @@ pub(super) async fn start_task_executor(
                 }
             }
         }
+        new_task_notifier.notified().await;
     }
 }

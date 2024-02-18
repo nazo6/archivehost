@@ -8,6 +8,8 @@ use axum::{
 
 use super::AppState;
 
+mod common;
+mod interface;
 mod mutation;
 mod query;
 mod subscription;
@@ -16,7 +18,7 @@ pub fn router(state: AppState) -> Router<AppState> {
     let schema = Schema::build(
         query::QueryRoot::default(),
         mutation::MutationRoot,
-        subscription::Subscription,
+        subscription::Subscription::default(),
     )
     .data(state)
     .finish();

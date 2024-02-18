@@ -10,6 +10,11 @@ mod task_executor;
 
 pub use mutate::*;
 
+/// NOTE:
+/// ダウンロードキューを管理する構造体。ダウンロードキューは当初メモリに保存しようとしていたが結構つらかったためデータベースに保存することにした。
+/// なのでこの構造体を使わなくてもデータベースに直接クエリすることでダウンロードキューを管理できる。
+/// しかし、データ変更時の通知機能を正常に機能させるため、キューをmutateする時は直接行うのではなく
+/// まずこの構造体に変更後通知を行うメソッドを実装してからそのメソッドを呼ぶべきである。
 pub struct DownloadQueueController {
     // Notify downloader when new tasks are available
     new_task_notifier: Arc<Notify>,

@@ -20,7 +20,7 @@ pub fn router() -> Router<AppState> {
         .route(
             "/:site",
             get(|Path(site): Path<String>| async move {
-                Redirect::to(&format!("/web/{}/latest", site))
+                Redirect::to(&format!("/web/latest/{}", site))
             }),
         )
         .route("/latest/*url", get(serve_site_latest))

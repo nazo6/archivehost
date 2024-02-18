@@ -1,49 +1,11 @@
-use async_graphql::{ComplexObject, Context, Object, Result, SimpleObject};
+use async_graphql::{Context, Object, Result};
 use db::entity::archive;
-use sea_orm::{
-    ColumnTrait as _, EntityTrait as _, PaginatorTrait as _, QueryFilter as _, QuerySelect,
-};
+use sea_orm::{EntityTrait as _, PaginatorTrait as _, QuerySelect};
 
 use crate::app::serve::AppState;
 
-#[derive(SimpleObject, Default)]
-#[graphql(complex)]
-pub struct QueryRoot {
-    pub site_list: SiteList,
-}
-
-#[ComplexObject]
-impl QueryRoot {
-    async fn paths(
-        &self,
-        ctx: &Context<'_>,
-        host: String,
-        mime: Option<String>,
-    ) -> Result<Vec<String>> {
-        let s = ctx.data::<AppState>().unwrap().clone();
-
-        let mut paths_q = archive::Entity::find()
-            .select_only()
-            .column(archive::Column::UrlPath)
-            .distinct()
-            .filter(archive::Column::UrlHost.eq(host));
-        if let Some(mime) = mime {
-            paths_q = paths_q.filter(archive::Column::Mime.eq(mime));
-        }
-
-        let paths = paths_q
-            .into_tuple::<(String,)>()
-            .all(&s.conn)
-            .await?
-            .into_iter()
-            .map(|d| d.0)
-            .collect();
-        Ok(paths)
-    }
-}
-
 #[derive(Default)]
-pub struct SiteList;
+pub(super) struct SiteList;
 
 #[Object]
 impl SiteList {

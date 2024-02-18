@@ -1,10 +1,54 @@
 
+type DownloadGroup {
+	url: String!
+	to: Int
+	from: Int
+	downloadType: DownloadType!
+	failed: String
+	id: String!
+	tasks: [DownloadTask!]!
+	taskStats: DownloadStats!
+}
+
+type DownloadQueueQuery {
+	stats: DownloadStats!
+	groups: [DownloadGroup!]!
+}
+
 type DownloadStats {
 	pending: Int!
 	downloading: Int!
 	success: Int!
 	failed: Int!
 	skipped: Int!
+}
+
+enum DownloadStatus {
+	PENDING
+	DOWNLOADING
+	SUCCESS
+	FAILED
+	SKIPPED
+}
+
+"""
+Download task.
+Corresponds to `download_queue` table.
+"""
+type DownloadTask {
+	url: String!
+	downloadStatus: DownloadStatus!
+	message: String
+	timestamp: Int!
+	mime: String!
+	statusCode: Int
+	id: String!
+	group: DownloadGroup!
+}
+
+enum DownloadType {
+	SINGLE
+	BATCH
 }
 
 
@@ -17,7 +61,8 @@ type MutationRoot {
 
 type QueryRoot {
 	siteList: SiteList!
-	paths(host: String!, mime: String): [String!]!
+	downloadQueue: DownloadQueueQuery!
+	sitePaths(host: String!, mime: String): [SitePath!]!
 }
 
 type SiteList {
@@ -25,9 +70,16 @@ type SiteList {
 	hosts(offset: Int, limit: Int): [String!]!
 }
 
+type SitePath {
+	path: String!
+	mime: String
+	timestamp: Int!
+}
+
 
 type Subscription {
-	downloadStats: DownloadStats!
+	downloadQueueStats: DownloadStats!
+	downloadQueueGroups: [DownloadGroup!]!
 }
 
 directive @include(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
