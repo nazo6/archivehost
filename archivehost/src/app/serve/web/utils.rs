@@ -1,12 +1,15 @@
 use std::path::PathBuf;
 
 use db::entity::archive;
-use sea_orm::{ColumnTrait, EntityTrait as _, QueryFilter as _, QueryOrder as _};
+use sea_orm::{
+    ColumnTrait, DatabaseConnection, EntityTrait as _, QueryFilter as _, QueryOrder as _,
+};
 use url::Url;
 
-use crate::{common::timestamp::Timestamp, config::CONFIG, constant::CONN};
+use crate::{common::timestamp::Timestamp, config::CONFIG};
 
 async fn find(
+    conn: &DatabaseConnection,
     until: Option<&Timestamp>,
     host: &str,
     path: &str,
@@ -24,7 +27,7 @@ async fn find(
 
     let find = find.order_by_desc(archive::Column::Timestamp);
 
-    let data = find.one(&*CONN).await?;
+    let data = find.one(conn).await?;
 
     let Some(data) = data else {
         return Ok(None);
@@ -36,6 +39,7 @@ async fn find(
 /// Find the latest page for a site and path.
 #[tracing::instrument(err)]
 pub async fn find_latest_page(
+    conn: &DatabaseConnection,
     until: Option<&Timestamp>,
     url: &Url,
 ) -> eyre::Result<Option<(Timestamp, PathBuf)>> {
@@ -70,11 +74,11 @@ pub async fn find_latest_page(
 
     let download_dir = CONFIG.download_dir();
 
-    let data = if let Some(data) = find(until, url_host, url.path()).await? {
+    let data = if let Some(data) = find(conn, until, url_host, url.path()).await? {
         data
-    } else if let Some(data) = find(until, url_host, url_with_index_html.path()).await? {
+    } else if let Some(data) = find(conn, until, url_host, url_with_index_html.path()).await? {
         data
-    } else if let Some(data) = find(until, url_host, url_alt.path()).await? {
+    } else if let Some(data) = find(conn, until, url_host, url_alt.path()).await? {
         data
     } else {
         return Ok(None);

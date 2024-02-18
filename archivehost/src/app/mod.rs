@@ -7,20 +7,20 @@ mod download;
 mod fixdb;
 mod serve;
 
-pub async fn start() -> eyre::Result<()> {
+pub async fn start(conn: sea_orm::DatabaseConnection) -> eyre::Result<()> {
     match CLI.command.clone() {
         Commands::Download(args) => {
-            download::download(args).await?;
+            download::download(&conn, args).await?;
         }
         Commands::Serve(args) => {
-            serve::serve(args).await?;
+            serve::serve(conn, args).await?;
         }
         Commands::Config => {
             println!("Config location: {:?}", &*CONFIG_PATH);
             println!("Config content: {:#?}", &*crate::config::CONFIG);
         }
         Commands::FixDb => {
-            fixdb::fixdb().await?;
+            fixdb::fixdb(&conn).await?;
         }
     }
 

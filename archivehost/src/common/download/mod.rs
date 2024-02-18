@@ -3,7 +3,7 @@ use std::path::Path;
 use db::entity::archive::{ActiveModel as DbArchiveActiveModel, Entity as DbArchive};
 use sea_orm::{EntityTrait as _, Set};
 
-use crate::{config::CONFIG, constant::CONN};
+use crate::config::CONFIG;
 
 use super::{timestamp::Timestamp, wayback_client::WaybackClient};
 
@@ -17,6 +17,7 @@ pub enum DownloadResult {
 
 /// Download page and insert info to db.
 pub async fn download_and_save_page(
+    conn: &sea_orm::DatabaseConnection,
     client: &WaybackClient,
     url_str: &str,
     mime: &str,
@@ -64,7 +65,7 @@ pub async fn download_and_save_page(
         url_path.to_string(),
         timestamp.unix_time(),
     ))
-    .one(&*CONN)
+    .one(conn)
     .await?
     .is_some()
     {
@@ -81,7 +82,7 @@ pub async fn download_and_save_page(
             status: Set(status_code.map(|v| v.as_u16() as i32)),
             save_path: Set(save_path_rel.to_string_lossy().to_string()),
         })
-        .exec(&*CONN)
+        .exec(conn)
         .await?;
         return Ok(DownloadResult::FixDb(
             "File already exists. Data is inserted to db.".to_string(),
@@ -102,7 +103,7 @@ pub async fn download_and_save_page(
         status: Set(status_code.map(|v| v.as_u16() as i32)),
         save_path: Set(save_path_rel.to_string_lossy().to_string()),
     })
-    .exec(&*CONN)
+    .exec(conn)
     .await?;
 
     Ok::<DownloadResult, eyre::Report>(DownloadResult::Done)

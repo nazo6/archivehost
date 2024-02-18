@@ -4,7 +4,7 @@ use futures_util::Stream;
 use sea_orm::{ColumnTrait as _, EntityTrait as _, FromQueryResult, QuerySelect};
 use tracing::error;
 
-use crate::{app::serve::State, constant::CONN};
+use crate::app::serve::AppState;
 
 pub struct Subscription;
 
@@ -17,7 +17,7 @@ struct DownloadStats {
     skipped: i32,
 }
 
-async fn get_download_stats() -> Result<DownloadStats> {
+async fn get_download_stats(conn: &sea_orm::DatabaseConnection) -> Result<DownloadStats> {
     #[derive(Debug, FromQueryResult)]
     struct SelectResult {
         download_status: DownloadStatus,
@@ -29,7 +29,7 @@ async fn get_download_stats() -> Result<DownloadStats> {
         .column_as(download_queue::Column::Id.count(), "count")
         .group_by(download_queue::Column::DownloadStatus)
         .into_model::<SelectResult>()
-        .all(&*CONN)
+        .all(conn)
         .await?;
     let mut stats = DownloadStats::default();
     for r in res {
@@ -48,12 +48,13 @@ async fn get_download_stats() -> Result<DownloadStats> {
 #[Subscription]
 impl Subscription {
     async fn download_stats(&self, ctx: &Context<'_>) -> impl Stream<Item = DownloadStats> {
-        let dlq = &ctx.data::<State>().unwrap().dl_q;
-        let mut rx = dlq.subscribe_changes();
+        let s = ctx.data::<AppState>().unwrap().clone();
+
+        let mut rx = s.dl_q.subscribe_changes();
         async_stream::stream!({
-            yield get_download_stats().await.unwrap_or_default();
+            yield get_download_stats(&s.conn).await.unwrap_or_default();
             while (rx.recv().await).is_some() {
-                let Ok(stats) = get_download_stats().await else {
+                let Ok(stats) = get_download_stats(&s.conn).await else {
                     error!("Failed to get download stats");
                     continue;
                 };

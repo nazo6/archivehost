@@ -1,10 +1,10 @@
-use async_graphql::{ComplexObject, Object, Result, SimpleObject};
+use async_graphql::{ComplexObject, Context, Object, Result, SimpleObject};
 use db::entity::archive;
 use sea_orm::{
     ColumnTrait as _, EntityTrait as _, PaginatorTrait as _, QueryFilter as _, QuerySelect,
 };
 
-use crate::constant::CONN;
+use crate::app::serve::AppState;
 
 #[derive(SimpleObject, Default)]
 #[graphql(complex)]
@@ -14,7 +14,14 @@ pub struct QueryRoot {
 
 #[ComplexObject]
 impl QueryRoot {
-    async fn paths(&self, host: String, mime: Option<String>) -> Result<Vec<String>> {
+    async fn paths(
+        &self,
+        ctx: &Context<'_>,
+        host: String,
+        mime: Option<String>,
+    ) -> Result<Vec<String>> {
+        let s = ctx.data::<AppState>().unwrap().clone();
+
         let mut paths_q = archive::Entity::find()
             .select_only()
             .column(archive::Column::UrlPath)
@@ -26,7 +33,7 @@ impl QueryRoot {
 
         let paths = paths_q
             .into_tuple::<(String,)>()
-            .all(&*CONN)
+            .all(&s.conn)
             .await?
             .into_iter()
             .map(|d| d.0)
@@ -40,19 +47,26 @@ pub struct SiteList;
 
 #[Object]
 impl SiteList {
-    #[tracing::instrument(skip(self), err(Debug, level = "warn"))]
-    async fn total_count(&self) -> Result<u64> {
+    #[tracing::instrument(skip(self, ctx), err(Debug, level = "warn"))]
+    async fn total_count(&self, ctx: &Context<'_>) -> Result<u64> {
+        let s = ctx.data::<AppState>().unwrap().clone();
         let res = archive::Entity::find()
             .select_only()
             .column(archive::Column::UrlHost)
             .distinct()
-            .count(&*CONN)
+            .count(&s.conn)
             .await?;
         Ok(res)
     }
 
-    #[tracing::instrument(skip(self), err(Debug, level = "warn"))]
-    async fn hosts(&self, offset: Option<u64>, limit: Option<u64>) -> Result<Vec<String>> {
+    #[tracing::instrument(skip(self, ctx), err(Debug, level = "warn"))]
+    async fn hosts(
+        &self,
+        ctx: &Context<'_>,
+        offset: Option<u64>,
+        limit: Option<u64>,
+    ) -> Result<Vec<String>> {
+        let s = ctx.data::<AppState>().unwrap().clone();
         let offset = offset.unwrap_or(0);
         let limit = if let Some(limit) = limit {
             limit.min(100).max(1)
@@ -67,7 +81,7 @@ impl SiteList {
             .offset(offset)
             .limit(limit)
             .into_tuple::<(String,)>()
-            .all(&*CONN)
+            .all(&s.conn)
             .await?
             .into_iter()
             .map(|d| d.0)

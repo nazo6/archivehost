@@ -16,7 +16,7 @@ use crate::{
 };
 
 #[tracing::instrument(skip(args), err)]
-pub async fn download(args: DownloadArgs) -> eyre::Result<()> {
+pub async fn download(conn: &sea_orm::DatabaseConnection, args: DownloadArgs) -> eyre::Result<()> {
     let client = WaybackClient::default();
 
     let from = if let Some(from) = args.from {
@@ -88,6 +88,7 @@ pub async fn download(args: DownloadArgs) -> eyre::Result<()> {
                 }
 
                 let res = download_and_save_page(
+                    conn,
                     client.as_ref(),
                     &record.original,
                     &record.mime,

@@ -1,11 +1,10 @@
 use crate::config::CONFIG;
-use crate::constant::CONN;
 
 use db::entity::archive::Entity as DbArchive;
 use sea_orm::EntityTrait;
 
-pub async fn fixdb() -> eyre::Result<()> {
-    let entries = DbArchive::find().all(&*CONN).await?;
+pub async fn fixdb(conn: &sea_orm::DatabaseConnection) -> eyre::Result<()> {
+    let entries = DbArchive::find().all(conn).await?;
     let download_dir = CONFIG.download_dir();
     for entry in entries {
         let path = entry.save_path;
@@ -16,7 +15,7 @@ pub async fn fixdb() -> eyre::Result<()> {
                 entry.url_path,
                 entry.timestamp,
             ))
-            .exec(&*CONN)
+            .exec(conn)
             .await
             {
                 Ok(_) => {

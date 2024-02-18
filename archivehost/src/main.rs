@@ -1,5 +1,7 @@
-use constant::CONN;
+use config::CONFIG;
 use db::migration::{Migrator, MigratorTrait};
+use eyre::Context;
+use sea_orm::Database;
 use tracing::{info, warn};
 
 mod app;
@@ -21,17 +23,28 @@ async fn main() -> eyre::Result<()> {
 
     let _ = &*crate::config::CONFIG;
 
-    if cli::CLI.skip_migration {
-        warn!("ATTENTION: Skipping migration. This is for development. Using this in production may cause data loss.");
-    } else {
-        let pending = Migrator::get_pending_migrations(&*CONN).await?;
-        if !pending.is_empty() {
-            info!("Running pending migrations");
-            Migrator::up(&*CONN, None).await?;
-        }
-    }
+    let conn = {
+        let url = format!(
+            "sqlite://{}/db.sqlite?mode=rwc",
+            CONFIG.root.to_string_lossy()
+        );
+        let conn = Database::connect(url)
+            .await
+            .wrap_err("Failed to connect to database")?;
 
-    app::start().await?;
+        if cli::CLI.skip_migration {
+            warn!("ATTENTION: Skipping migration. This is for development. Using this in production may cause data loss.");
+        } else {
+            let pending = Migrator::get_pending_migrations(&conn).await?;
+            if !pending.is_empty() {
+                info!("Running pending migrations");
+                Migrator::up(&conn, None).await?;
+            }
+        }
+        conn
+    };
+
+    app::start(conn).await?;
 
     Ok(())
 }

@@ -1,23 +1,24 @@
 use axum::{
-    extract::Path,
+    extract::{Path, State},
     response::{IntoResponse, Response},
 };
 use http::StatusCode;
 
 use super::{dummy_file::serve_dummy_file, utils::parse_url};
-use crate::common::timestamp::Timestamp;
+use crate::{app::serve::AppState, common::timestamp::Timestamp};
 
 use super::{serve_file::serve_file, utils::find_latest_page};
 
-#[tracing::instrument(err(Debug, level = "warn"))]
+#[tracing::instrument(skip(state), err(Debug, level = "warn"))]
 pub async fn serve_site_with_timestamp(
     Path((timestamp_str, url)): Path<(String, String)>,
+    State(state): State<AppState>,
 ) -> Result<Response, (StatusCode, String)> {
     let timestamp = Timestamp::from_str(&timestamp_str)
         .map_err(|e| (StatusCode::BAD_REQUEST, format!("Invalid timestamp: {}", e)))?;
     let url =
         parse_url(&url).map_err(|e| (StatusCode::BAD_REQUEST, format!("Bad request: {}", e)))?;
-    let latest = find_latest_page(Some(&timestamp), &url)
+    let latest = find_latest_page(&state.conn, Some(&timestamp), &url)
         .await
         .map_err(|_e| {
             (

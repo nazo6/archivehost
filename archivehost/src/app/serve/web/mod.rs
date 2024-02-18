@@ -6,7 +6,7 @@ use axum::{
 
 use self::{latest::serve_site_latest, timestamp::serve_site_with_timestamp};
 
-use super::State;
+use super::AppState;
 
 mod decode;
 mod dummy_file;
@@ -15,7 +15,7 @@ mod serve_file;
 mod timestamp;
 mod utils;
 
-pub fn router() -> Router<State> {
+pub fn router() -> Router<AppState> {
     Router::new()
         .route(
             "/:site",

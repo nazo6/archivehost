@@ -14,12 +14,17 @@ mod web;
 
 struct StateInner {
     dl_q: download_queue::DownloadQueueController,
+    conn: sea_orm::DatabaseConnection,
 }
-type State = Arc<StateInner>;
+type AppState = Arc<StateInner>;
 
-pub async fn serve(_args: ServeArgs) -> eyre::Result<()> {
+pub async fn serve(conn: sea_orm::DatabaseConnection, _args: ServeArgs) -> eyre::Result<()> {
     let state = StateInner {
-        dl_q: download_queue::DownloadQueueController::start(CONFIG.download.concurrency),
+        dl_q: download_queue::DownloadQueueController::start(
+            conn.clone(),
+            CONFIG.download.concurrency,
+        ),
+        conn,
     };
     let state = Arc::new(state);
 

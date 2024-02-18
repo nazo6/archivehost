@@ -5,7 +5,7 @@ use crate::{
     common::timestamp::Timestamp,
 };
 
-use super::{super::State, MutationRoot};
+use super::{super::AppState, MutationRoot};
 
 #[Object]
 impl MutationRoot {
@@ -17,7 +17,7 @@ impl MutationRoot {
         from: Option<String>,
         to: Option<String>,
     ) -> Result<bool> {
-        let dlq = &ctx.data::<State>().unwrap().dl_q;
+        let dlq = &ctx.data::<AppState>().unwrap().dl_q;
 
         let from = match from {
             Some(v) => Some(Timestamp::from_str(&v)?),
@@ -38,7 +38,7 @@ impl MutationRoot {
     }
     #[tracing::instrument(skip(self, ctx), err(Debug))]
     async fn clear_download_queue(&self, ctx: &Context<'_>) -> Result<bool> {
-        let dlq = &ctx.data::<State>().unwrap().dl_q;
+        let dlq = &ctx.data::<AppState>().unwrap().dl_q;
         dlq.clear_download_queue().await?;
 
         Ok(true)

@@ -6,13 +6,13 @@ use axum::{
     Router,
 };
 
-use super::State;
+use super::AppState;
 
 mod mutation;
 mod query;
 mod subscription;
 
-pub fn router(state: State) -> Router<State> {
+pub fn router(state: AppState) -> Router<AppState> {
     let schema = Schema::build(
         query::QueryRoot::default(),
         mutation::MutationRoot,
