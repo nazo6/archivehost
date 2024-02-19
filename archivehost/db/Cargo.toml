@@ -7,11 +7,15 @@ edition = "2021"
 name = "db"
 path = "src/lib.rs"
 
+[features]
+default = ["cli"]
+cli = ["sea-orm-migration/cli"]
+
 [dependencies]
 sea-orm-migration = { version = "0.12.14", features = [
   "runtime-tokio-rustls",
   "sqlx-sqlite",
-] }
+], default-features = false }
 sea-orm = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 uuid = { workspace = true }

@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "kill": "pkill archivehost",
-    "migrate": "cd archivehost && sea migrate -d ./db",
+    "migrate": "cd archivehost && cargo run -p db --",
     "db-update": "npm run sea-migrate && npm run sea-entity",
     "db-reset": "npm run sea-migrate fresh && npm run sea-entity",
     "dev": "concurrently -c 'blue,green' npm:dev:*",

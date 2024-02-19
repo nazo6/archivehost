@@ -15,7 +15,11 @@ tower-http = { version = "0.5.1", features = ["fs", "trace", "normalize-path"] }
 serde_url_params = "0.2.1"
 thiserror = "1.0.56"
 http = "1.0.0"
-reqwest = { version = "0.11.24", features = ["json", "gzip"] }
+reqwest = { version = "0.11.24", default-features = false, features = [
+  "json",
+  "gzip",
+  "rustls-tls",
+] }
 eyre = "0.6.12"
 axum = "0.7.4"
 serde = { version = "1.0.196", features = ["derive"] }
@@ -35,7 +39,7 @@ async-graphql = "7.0.1"
 async-graphql-axum = "7.0.1"
 sea-orm = { workspace = true }
 tokio = { workspace = true, features = ["macros", "signal", "rt-multi-thread"] }
-db = { path = "db" }
+db = { path = "db", default-features = false }
 chardetng = "0.1.17"
 encoding_rs = "0.8.33"
 uuid = { workspace = true }

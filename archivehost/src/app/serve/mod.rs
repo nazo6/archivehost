@@ -19,6 +19,18 @@ struct StateInner {
 type AppState = Arc<StateInner>;
 
 pub async fn serve(conn: sea_orm::DatabaseConnection, _args: ServeArgs) -> eyre::Result<()> {
+    let mut sigterm =
+        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate()).unwrap();
+
+    tokio::select!(
+        _ = start_server(conn) => {},
+        _ = sigterm.recv() => {}
+    );
+
+    Ok(())
+}
+
+async fn start_server(conn: sea_orm::DatabaseConnection) -> eyre::Result<()> {
     let state = StateInner {
         dl_q: download_queue::DownloadQueueController::start(
             conn.clone(),

@@ -1,0 +1,10 @@
+version: "3"
+services:
+  app:
+    image: ${IMAGE}
+    build: .
+    ports:
+      - 3110:3000
+    volumes:
+      - ./data/docker/config:/root/.config/archivehost
+      - ./data/docker/data:/root/.local/share/archivehost
