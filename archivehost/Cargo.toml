@@ -1,7 +1,7 @@
 [package]
 name = "archivehost"
-version = "0.1.0"
 edition = "2021"
+version.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -47,6 +47,7 @@ normalize-path = "0.2.1"
 
 [workspace]
 members = ["db"]
+package.version = "0.1.0"
 
 [workspace.dependencies]
 tokio = { version = "1.36.0" }

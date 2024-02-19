@@ -1,6 +1,5 @@
 {
   "name": "archivehost",
-  "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "kill": "pkill archivehost",
