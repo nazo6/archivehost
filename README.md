@@ -31,6 +31,9 @@ $ archivehost --help
 
 ### Download
 
+Download command just downloads the archive of the given url. It is useful when
+you just want to download the archive of the url.
+
 ```bash
 $ archivehost download <url> [--concurrency <concurrency>] [--from <from>] [--to <to>]
 ```
@@ -40,6 +43,10 @@ File will be save to `~/.local/share/archivehost` on Linux and
 `--root` flag.
 
 ### Serve
+
+Serve command starts the server to serve the download manager and the archives
+(this includes sites that downloaded by `download` command). This can be used as
+self-hosted wayback machine.
 
 ```bash
 $ archivehost serve [--port <port>] [--host <host>]
@@ -68,8 +75,10 @@ Show the archive of the url before the timestamp.
 
 - Serve
   - [x] Basic server
-  - [ ] Add manager web ui frontend and api
+  - [x] Add manager web ui frontend and api
   - [ ] Add banner to archive page so that user can see archive info
   - [ ] On-demand download
   - [ ] Return dummy response even if the archive is not found
+    - [x] Basic dummy response
+    - [ ] Make dummy configurable
   - [ ] Better url rewriting

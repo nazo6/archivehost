@@ -1,0 +1,9 @@
+{
+  "lspconfig": {
+    "rust_analyzer": {
+      "rust-analyzer.diagnostics.disabled": [
+        "needless_return"
+      ]
+    }
+  }
+}
