@@ -6,7 +6,7 @@ import {
 	Title,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet } from "react-router";
 import { Link, Path } from "../router";
 
 export default function App() {
